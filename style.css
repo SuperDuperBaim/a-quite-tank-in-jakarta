@@ -2214,6 +2214,12 @@ body {
 }
 
 /* --- Katalog Ikan Dinamis (admin) --- */
+.catalog-source {
+  margin: 0;
+  padding: 10px 14px 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
 .catalog-form {
   margin-top: var(--space-md);
   padding-top: var(--space-md);

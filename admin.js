@@ -18,6 +18,8 @@ let fb = null;
 let players = [];
 let giftUid = null;
 let editingFishId = null;
+// ID yang benar-benar ada di Firestore (bukan fallback lokal).
+let remoteIds = new Set();
 // Katalog runtime: isi fish_catalog, fallback default lokal.
 let catalog = DEFAULT_CATALOG.map((f) => ({ ...normalizeCatalogDoc(f) }));
 const catalogById = (id) => catalog.find((f) => f.id === id) || null;
@@ -156,6 +158,14 @@ function updateImagePreview() {
   img.onerror = () => { img.removeAttribute('src'); img.hidden = true; };
 }
 
+function updateCatalogSource() {
+  const el = $('catalog-source');
+  if (!el) return;
+  el.textContent = remoteIds.size
+    ? `Sumber: Firestore (${remoteIds.size} ikan)`
+    : 'Sumber: default lokal — fish_catalog di Firestore masih kosong, tambahkan ikan lewat form di bawah.';
+}
+
 /* ---------- KATALOG IKAN DINAMIS ---------- */
 function renderCatalog() {
   const tb = $('catalog-tbody');
@@ -262,6 +272,11 @@ async function handleCatalogSubmit(e) {
 
 async function deleteFish(fishId, name) {
   if (!fb || !fishId) return;
+  // Baris default lokal belum ada di Firestore -> tak ada yang bisa dihapus.
+  if (!remoteIds.has(fishId)) {
+    toast(`"${name}" belum ada di Firestore (data default). Tambahkan dulu lewat form, baru bisa dihapus.`, true);
+    return;
+  }
   const ok = await confirmAction({
     title: 'Hapus Ikan?',
     message: `Hapus "${name}" (${fishId}) dari fish_catalog? Ikan ini tak lagi muncul di gacha & gift.`,
@@ -282,6 +297,7 @@ async function deleteFish(fishId, name) {
 async function init() {
   $('admin-guard-msg').style.display = '';
   renderGiftOptions();
+  updateCatalogSource();
   renderCatalog();
   fb = await getFirebase();
   if (!fb) {
@@ -370,9 +386,11 @@ function watchData() {
 
 function watchCatalog() {
   subscribeCatalog(fb, (list) => {
+    remoteIds = new Set(list.map((f) => f.id));
     // Koleksi kosong -> tetap pakai fallback lokal agar gift bisa dipakai.
     if (list.length) catalog = list;
     else catalog = DEFAULT_CATALOG.map((f) => ({ ...normalizeCatalogDoc(f) }));
+    updateCatalogSource();
     renderCatalog();
     renderGiftOptions();
   });
