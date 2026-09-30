@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">A Quite Tank in Jakarta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK (ES Modules) -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="script.js"></script>
+</head>
+<body>
+    <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
+    <section id="splash-screen" class="splash-screen" aria-hidden="false">
+        <div class="splash-bg"></div>
+        <div class="splash-content">
+            <button type="button" id="splash-play-btn" class="btn-splash-play btn-text-play" aria-label="Start Game" data-i18n-aria-label="splash_play_aria">
+                <span class="btn-play-text" data-i18n="btn_start">Start</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Intro Screen (Pure Video Opening) -->
+    <section id="intro-screen" class="intro-screen" aria-hidden="true">
+        <div class="intro-video-wrapper">
+            <video id="intro-video" src="assets/intro/intro.mp4" playsinline preload="auto"></video>
+        </div>
+    </section>
+
+    <!-- Welcome Screen (Firebase Auth: Login/Register) -->
+    <section id="welcome-screen" class="welcome-screen-themed" aria-hidden="true">
+        <div class="welcome-bg"></div>
+        <div class="welcome-themed-content">
+            <div id="auth-form-container">
+                <!-- Login Form -->
+                <form id="login-form" class="welcome-themed-form auth-form" aria-hidden="false">
+                    <h2 class="auth-title" data-i18n="auth_login_title">Welcome Back</h2>
+                    <div class="input-glass-container">
+                        <span class="input-icon">🐟</span>
+                        <input type="text" id="login-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
+                    </div>
+                    <div class="input-glass-container">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="login-password" name="password" placeholder="Password" data-i18n-placeholder="auth_password_ph" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" id="login-btn" class="btn-themed-start">
+                        <span data-i18n="auth_login_btn">Login</span>
+                        <span class="btn-arrow">➔</span>
+                    </button>
+                    <p class="auth-switch"><span data-i18n="auth_no_account">Don't have an account?</span> <button type="button" id="switch-to-register" class="auth-link" data-i18n="link_register">Sign up</button></p>
+                    <div id="login-error" class="auth-error" hidden></div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="welcome-themed-form auth-form" aria-hidden="true">
+                    <h2 class="auth-title" data-i18n="auth_register_title">Create Account</h2>
+                    <div class="input-glass-container">
+                        <span class="input-icon">🐟</span>
+                        <input type="text" id="register-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
+                    </div>
+                    <div class="input-glass-container">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="register-password" name="password" placeholder="Password (min 6 chars)" data-i18n-placeholder="auth_password_min_ph" minlength="6" autocomplete="new-password" required>
+                    </div>
+                    <div class="input-glass-container">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="register-confirm" name="confirm" placeholder="Confirm Password" data-i18n-placeholder="auth_confirm_ph" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" id="register-btn" class="btn-themed-start">
+                        <span data-i18n="auth_register_btn">Register & Gacha</span>
+                        <span class="btn-arrow">➔</span>
+                    </button>
+                    <p class="auth-switch"><span data-i18n="auth_have_account">Already have an account?</span> <button type="button" id="switch-to-login" class="auth-link" data-i18n="link_login">Login</button></p>
+                    <div id="register-error" class="auth-error" hidden></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <div id="app">
+        <!-- Global Background Audio -->
+        <audio id="bgm" src="assets/backsound/Where%20You've%20Begun.mp3" loop preload="auto"></audio>
+
+        <!-- Gacha Screen -->
+        <section id="gacha-screen" class="screen" aria-hidden="true">
+            <div class="gacha-content">
+                <h2 data-i18n="gacha_title">Your First Fish</h2>
+                <div id="gacha-result" class="gacha-result" aria-live="polite">
+                    <div class="gacha-egg">
+                        <img src="assets/ui/egg.png" alt="Fish Egg" class="gacha-egg-img">
+                    </div>
+                </div>
+                <button id="gacha-btn" class="btn-primary" data-i18n="gacha_discover">Discover Fish</button>
+                <button id="keep-fish-btn" class="btn-primary" data-i18n="gacha_keep" hidden>Keep Fish</button>
+            </div>
+        </section>
+
+        <!-- Aquarium Screen -->
+        <section id="aquarium-screen" class="screen" aria-hidden="true">
+            <div class="aquarium-container">
+                <!-- Background Layer (Time-based) -->
+                <div id="bg-layer" class="bg-layer" aria-hidden="true"></div>
+
+                <!-- Settings Button -->
+                <button id="settings-btn" class="btn-settings" aria-label="Open settings" data-i18n-aria-label="settings_open_aria" title="Settings" data-i18n-title="settings_title">
+                    <span id="settings-icon">⚙️</span>
+                </button>
+
+                <!-- Collapsible Drawer Toggle -->
+                <button id="drawer-toggle" class="drawer-toggle" aria-label="Toggle panel" aria-expanded="true" title="Close Panel" data-i18n-title="drawer_close">
+                    <span class="drawer-toggle-icon">◀</span>
+                </button>
+
+                <!-- Settings Modal Dialog -->
+                <div id="settings-modal" class="settings-modal" aria-hidden="true">
+                    <div class="settings-backdrop" id="settings-backdrop"></div>
+                    <div class="settings-dialog" role="dialog" aria-labelledby="settings-title">
+                        <div class="settings-header">
+                            <h3 id="settings-title" data-i18n="settings_title">Settings</h3>
+                            <button id="settings-close-btn" class="settings-close" aria-label="Close settings" data-i18n-aria-label="settings_close_aria">&times;</button>
+                        </div>
+
+                        <div class="settings-body">
+                            <!-- Language Section -->
+                            <div class="settings-group">
+                                <span class="settings-label" data-i18n="language_select">Language</span>
+                                <div class="lang-switcher" role="group" aria-label="Language">
+                                    <button type="button" class="lang-btn" data-lang="id">ID</button>
+                                    <button type="button" class="lang-btn" data-lang="en">EN</button>
+                                    <button type="button" class="lang-btn" data-lang="ja">JA</button>
+                                </div>
+                            </div>
+
+                            <!-- Volume Section -->
+                            <div class="settings-group">
+                                <label for="volume-slider" class="settings-label">
+                                    <span data-i18n="bgm_volume">Background Music</span>
+                                    <span id="volume-val">18%</span>
+                                </label>
+                                <div class="volume-control">
+                                    <span class="vol-icon">🔈</span>
+                                    <input type="range" id="volume-slider" min="0" max="100" value="18" class="settings-slider">
+                                    <span class="vol-icon">🔊</span>
+                                </div>
+                            </div>
+
+                            <!-- Ambient Sound Section (PRD Cozy B) -->
+                            <div class="settings-group">
+                                <span class="settings-label" data-i18n="ambient_label">Ambient Sound</span>
+                                <div class="lang-switcher" role="group" aria-label="Ambient">
+                                    <button type="button" class="lang-btn ambient-btn" data-ambient="on">On</button>
+                                    <button type="button" class="lang-btn ambient-btn" data-ambient="off">Off</button>
+                                </div>
+                            </div>
+
+                            <!-- Username Section -->
+                            <div class="settings-group">
+                                <label for="settings-username" class="settings-label" data-i18n="username_label">Username</label>
+                                <div class="username-edit-row">
+                                    <input type="text" id="settings-username" maxlength="20" placeholder="Your name" data-i18n-placeholder="username_ph">
+                                    <button type="button" id="save-username-btn" class="btn-sm" data-i18n="btn_save">Save</button>
+                                </div>
+                                <span id="username-save-msg" class="save-msg" data-i18n="username_updated" hidden>Username updated!</span>
+                            </div>
+
+                            <!-- Redeem Code Section -->
+                            <div class="settings-group">
+                                <span class="settings-label" data-i18n="redeem_label">Redeem Code</span>
+                                <div class="redeem-row">
+                                    <input type="text" id="redeem-code-input" maxlength="10" placeholder="Enter code..." data-i18n-placeholder="redeem_placeholder" style="text-transform: uppercase;">
+                                    <button type="button" id="redeem-code-btn" class="btn-sm" data-i18n="redeem_btn">Redeem</button>
+                                </div>
+                                <span id="redeem-msg" class="save-msg" hidden></span>
+                            </div>
+
+                            <!-- Intro Cinematic Section -->
+                            <div class="settings-group">
+                                <span class="settings-label" data-i18n="cinematic_label">Opening Cinematic</span>
+                                <button type="button" id="replay-intro-btn" class="btn-sm btn-replay-intro">
+                                    🎬 <span data-i18n="cinematic_replay">Replay Intro</span>
+                                </button>
+                            </div>
+
+                            <!-- Logout Section -->
+                            <div class="settings-group">
+                                <span class="settings-label" data-i18n="account_label">Account</span>
+                                <button type="button" id="logout-btn" class="btn-sm btn-logout" data-i18n="btn_logout">Logout</button>
+                            </div>
+
+                            <!-- Social & Web Profile Section -->
+                            <div class="settings-group settings-creator">
+                                <span class="settings-label" data-i18n="creator_label">Creator</span>
+                                <div class="creator-links">
+                                    <a href="https://instagram.com/foolstuck_" target="_blank" rel="noopener noreferrer" class="creator-link">
+                                        <span class="link-icon">📸</span>
+                                        <div class="link-text">
+                                            <span class="link-title">Instagram</span>
+                                            <span class="link-sub">foolstuck_</span>
+                                        </div>
+                                        <span class="link-arrow">↗</span>
+                                    </a>
+                                    <a href="https://anandaibrahimhs.web.id" target="_blank" rel="noopener noreferrer" class="creator-link">
+                                        <span class="link-icon">🌐</span>
+                                        <div class="link-text">
+                                            <span class="link-title">Web Profile</span>
+                                            <span class="link-sub">anandaibrahimhs.web.id</span>
+                                        </div>
+                                        <span class="link-arrow">↗</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aquarium Foreground -->
+                <div id="aquarium" class="aquarium" role="img" aria-label="A Quite Tank in Jakarta with your fish">
+                    <div id="aquarium-bg" class="aquarium-bg" aria-hidden="true"></div>
+                    <div id="dirt-overlay" class="dirt-overlay" aria-hidden="true"></div>
+                    <div id="fish-container" class="fish-container">
+                        <!-- Fish inserted here via JS -->
+                    </div>
+                    <div id="food-particles" class="food-particles" aria-hidden="true"></div>
+                    <div class="bubbles" aria-hidden="true">
+                        <span class="bubble"></span>
+                        <span class="bubble"></span>
+                        <span class="bubble"></span>
+                        <span class="bubble"></span>
+                        <span class="bubble"></span>
+                    </div>
+                    <div id="rain-glass-overlay" class="rain-glass-overlay" aria-hidden="true" hidden></div>
+                </div>
+
+                <!-- Weather Badge (cozy, minimal) -->
+                <div id="weather-badge" class="weather-badge" aria-live="polite" hidden>
+                    <span id="weather-icon">🌤️</span>
+                    <span id="weather-text">Jakarta</span>
+                </div>
+
+                <!-- Status & Controls Panel (Collapsible Drawer) -->
+                <div id="side-drawer" class="side-drawer open">
+                    <div class="drawer-header">
+                        <span class="drawer-title" data-i18n="drawer_title">Control Panel</span>
+                    </div>
+                    <div class="drawer-content">
+                        <div class="status-panel" aria-label="Fish status">
+                            <div class="status-row">
+                                <span class="status-label" data-i18n="label_hunger">Hunger</span>
+                                <div class="status-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Hunger level">
+                                    <div id="hunger-bar" class="status-bar-fill"></div>
+                                </div>
+                                <span id="hunger-value" class="status-value">100%</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label" data-i18n="label_cleanliness">Cleanliness</span>
+                                <div class="status-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Cleanliness level">
+                                    <div id="cleanliness-bar" class="status-bar-fill"></div>
+                                </div>
+                                <span id="cleanliness-value" class="status-value">100%</span>
+                            </div>
+                        </div>
+
+                        <div class="food-stock" aria-label="Food supply">
+                            <div class="food-stock-header">
+                                <span class="food-stock-label" data-i18n="label_food_stock">Food Stock</span>
+                                <span id="food-count" class="food-stock-value">5 / 5</span>
+                            </div>
+                            <div class="food-stock-bar">
+                                <div id="food-stock-fill" class="food-stock-fill"></div>
+                            </div>
+                            <button id="claim-food-btn" class="btn btn-claim" aria-label="Claim free food" data-i18n-aria-label="claim_aria">
+                                <span id="claim-btn-text" data-i18n="btn_claim">Claim Food</span>
+                                <span id="claim-cooldown" class="claim-cooldown" hidden></span>
+                            </button>
+                        </div>
+
+                        <div class="controls">
+                            <button id="feed-btn" class="btn btn-feed" aria-label="Feed fish" data-i18n-aria-label="feed_aria" title="Feed (1 food)">
+                                <img src="assets/ui/bottle_tight.png" alt="Bottle" class="btn-icon" aria-hidden="true">
+                                <span class="btn-label" data-i18n="btn_feed">Feed</span>
+                            </button>
+                        </div>
+
+                        <div class="controls controls-cozy">
+                            <button id="snap-btn" class="btn btn-cozy" type="button" title="Polaroid Snap">
+                                <span aria-hidden="true">📷</span>
+                                <span class="btn-label" data-i18n="btn_snap">Snap</span>
+                            </button>
+                            <button id="journal-btn" class="btn btn-cozy" type="button" title="Fish Journal">
+                                <span aria-hidden="true">📓</span>
+                                <span class="btn-label" data-i18n="btn_journal">Journal</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fish Journal Modal (PRD Cozy D) -->
+        <div id="journal-modal" class="settings-modal journal-modal" aria-hidden="true">
+            <div class="settings-backdrop" id="journal-backdrop"></div>
+            <div class="settings-dialog journal-dialog" role="dialog" aria-labelledby="journal-title">
+                <div class="settings-header">
+                    <h3 id="journal-title" data-i18n="journal_title">Fish Journal</h3>
+                    <button id="journal-close-btn" class="settings-close" aria-label="Close journal">&times;</button>
+                </div>
+                <div id="journal-list" class="journal-list"></div>
+            </div>
+        </div>
+
+        <!-- Polaroid Photo Mode (PRD Cozy C) -->
+        <div id="photo-overlay" class="photo-overlay" aria-hidden="true" hidden>
+            <div class="polaroid-frame">
+                <div class="polaroid-photo">
+                    <img id="photo-img" alt="Polaroid snapshot">
+                </div>
+                <div id="photo-caption" class="polaroid-caption">A Quite Tank In Jakarta</div>
+            </div>
+            <div class="photo-actions">
+                <button id="photo-save-btn" class="btn btn-cozy" type="button">💾 <span data-i18n="photo_save">Save Photo</span></button>
+                <button id="photo-back-btn" class="btn btn-cozy" type="button">✖ <span data-i18n="photo_back">Back</span></button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

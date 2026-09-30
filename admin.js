@@ -1,0 +1,380 @@
+/* ========================================
+   A QUIET TANK — admin.js
+   Panel admin (Indonesia saja): daftar pemain,
+   Gift Fish (dinamis dari `fish_catalog`),
+   CRUD Katalog Ikan Dinamis + 5 rarity.
+   ======================================== */
+import { getFirebase } from './firebase-config.js';
+import {
+  RARITIES, DEFAULT_CATALOG, CATALOG_COLLECTION,
+  FISH_IMAGE_PATHS, fishImageLabel,
+  normalizeCatalogDoc, subscribeCatalog,
+} from './fish-catalog.js';
+
+const $ = (id) => document.getElementById(id);
+const TRAITS = ['playful', 'skittish', 'sleepy', 'glutton'];
+
+let fb = null;
+let players = [];
+let giftUid = null;
+let editingFishId = null;
+// Katalog runtime: isi fish_catalog, fallback default lokal.
+let catalog = DEFAULT_CATALOG.map((f) => ({ ...normalizeCatalogDoc(f) }));
+const catalogById = (id) => catalog.find((f) => f.id === id) || null;
+
+function fmtDate(ts) {
+  if (!ts) return '–';
+  const d = new Date(ts);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function fmtActive(ts) {
+  if (!ts) return '–';
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return 'baru saja';
+  if (m < 60) return `${m} menit lalu`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} jam lalu`;
+  return `${Math.floor(h / 24)} hari lalu`;
+}
+function toast(msg, err = false) {
+  const t = document.createElement('div');
+  t.className = 'gift-toast' + (err ? ' error' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), err ? 5000 : 3000);
+}
+
+/* ---------- MODAL KONFIRMASI (styled, pengganti window.confirm) ---------- */
+let confirmResolve = null;
+function confirmAction({ title = 'Yakin?', message = '', okText = 'Ya' } = {}) {
+  $('confirm-title').textContent = title;
+  $('confirm-msg').textContent = message;
+  $('confirm-ok').textContent = okText;
+  $('confirm-modal').setAttribute('aria-hidden', 'false');
+  return new Promise((resolve) => { confirmResolve = resolve; });
+}
+function closeConfirm(result) {
+  $('confirm-modal').setAttribute('aria-hidden', 'true');
+  if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+}
+function firestoreErrHint(err) {
+  const code = String(err?.code || '');
+  if (code.includes('permission-denied')) return ' (akses ditolak — deploy firestore.rules dulu)';
+  if (code.includes('unavailable') || code.includes('network')) return ' (jaringan bermasalah)';
+  return code ? ` (${code})` : '';
+}
+function catalogMsg(msg, err = false) {
+  const el = $('catalog-msg');
+  if (!el) return;
+  el.textContent = msg;
+  el.hidden = !msg;
+  el.style.color = err ? '#D97770' : '#4D8B84';
+  clearTimeout(el._t);
+  if (msg) el._t = setTimeout(() => { el.hidden = true; }, 3500);
+}
+
+/* ---------- DAFTAR PEMAIN ---------- */
+function renderTable(filter = '') {
+  const tb = $('admin-tbody');
+  const q = filter.trim().toLowerCase();
+  const rows = players.filter((p) => !q || (p.username || '').toLowerCase().includes(q));
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5">Tidak ada pemain.</td></tr>'; return; }
+  tb.innerHTML = '';
+  rows.forEach((p) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="username-cell"></td>' +
+      `<td>${fmtDate(p.createdAt)}</td>` +
+      `<td>${fmtActive(p.lastOnline)}</td>` +
+      `<td class="fish-count">${(p.fishList || []).length}</td>` +
+      '<td></td>';
+    tr.children[0].textContent = p.username || '(tanpa nama)';
+    const btn = document.createElement('button');
+    btn.className = 'btn-admin action-btn';
+    btn.textContent = '🎁 Gift';
+    btn.addEventListener('click', () => openGift(p.uid, p.username));
+    tr.children[4].appendChild(btn);
+    tb.appendChild(tr);
+  });
+}
+
+/* ---------- GIFT (dinamis dari fish_catalog) ---------- */
+function renderGiftOptions() {
+  const sel = $('gift-fish');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  catalog.forEach((f) => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = `${f.name} [${f.rarity}]`;
+    sel.appendChild(opt);
+  });
+  if (catalogById(prev)) sel.value = prev;
+}
+
+function openGift(uid, username) {
+  giftUid = uid;
+  renderGiftOptions();
+  $('gift-target').value = username;
+  $('gift-modal').setAttribute('aria-hidden', 'false');
+}
+function closeGift() {
+  giftUid = null;
+  $('gift-modal').setAttribute('aria-hidden', 'true');
+}
+
+/* ---------- DROPDOWN GAMBAR + PREVIEW ---------- */
+function populateImageOptions(selected = '') {
+  const sel = $('cf-image');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— Pilih gambar —';
+  sel.appendChild(placeholder);
+  const paths = [...FISH_IMAGE_PATHS];
+  // Path lama/kustom yang tak ada di daftar tetap bisa dipilih saat edit.
+  if (selected && !paths.includes(selected)) paths.unshift(selected);
+  paths.forEach((p) => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = fishImageLabel(p) + (FISH_IMAGE_PATHS.includes(p) ? '' : ' (kustom)');
+    sel.appendChild(opt);
+  });
+  sel.value = selected && paths.includes(selected) ? selected : '';
+  updateImagePreview();
+}
+
+function updateImagePreview() {
+  const sel = $('cf-image');
+  const img = $('cf-preview');
+  if (!sel || !img) return;
+  if (!sel.value) { img.removeAttribute('src'); img.hidden = true; return; }
+  img.hidden = false;
+  img.src = sel.value;
+  img.onerror = () => { img.removeAttribute('src'); img.hidden = true; };
+}
+
+/* ---------- KATALOG IKAN DINAMIS ---------- */
+function renderCatalog() {
+  const tb = $('catalog-tbody');
+  if (!tb) return;
+  if (!catalog.length) {
+    tb.innerHTML = '<tr><td colspan="6">Katalog kosong.</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  [...catalog]
+    .sort((a, b) => RARITIES.indexOf(a.rarity) - RARITIES.indexOf(b.rarity) || a.name.localeCompare(b.name))
+    .forEach((f) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="username-cell"></td>' +
+        '<td></td>' +
+        `<td><span class="rarity-badge rarity-${f.rarity}">${f.rarity}</span></td>` +
+        '<td class="fish-count"></td>' +
+        '<td></td>';
+      tr.children[0].textContent = f.id;
+      tr.children[1].textContent = f.name;
+      tr.children[3].textContent = f.imagePath;
+      const edit = document.createElement('button');
+      edit.className = 'btn-admin action-btn';
+      edit.textContent = 'Edit';
+      edit.addEventListener('click', () => startEditFish(f.id));
+      const del = document.createElement('button');
+      del.className = 'btn-admin btn-admin-secondary action-btn';
+      del.textContent = 'Hapus';
+      del.addEventListener('click', () => deleteFish(f.id, f.name));
+      tr.children[4].append(edit, del);
+      tb.appendChild(tr);
+    });
+}
+
+function slugifyFishId(s) {
+  return String(s || '').trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+/* Mulai mode edit: isi form dari data katalog. Fish ID dikunci
+   karena ia adalah ID dokumen Firestore. */
+function startEditFish(fishId) {
+  const f = catalogById(fishId);
+  if (!f) return;
+  editingFishId = f.id;
+  $('cf-fishId').value = f.id;
+  $('cf-fishId').disabled = true;
+  $('cf-name').value = f.name;
+  $('cf-rarity').value = f.rarity;
+  populateImageOptions(f.imagePath);
+  $('cf-scale').value = String(f.scale || 1);
+  $('cf-desc').value = f.description || '';
+  $('catalog-form-title').textContent = `Edit Ikan: ${f.name}`;
+  $('catalog-submit-btn').textContent = 'Simpan Perubahan';
+  $('catalog-cancel-btn').hidden = false;
+  $('catalog-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('cf-name').focus({ preventScroll: true });
+}
+
+function cancelEditFish() {
+  editingFishId = null;
+  $('catalog-form').reset();
+  $('cf-scale').value = '1';
+  $('cf-fishId').disabled = false;
+  populateImageOptions();
+  $('catalog-form-title').textContent = 'Tambah Ikan Baru';
+  $('catalog-submit-btn').textContent = 'Simpan ke Katalog';
+  $('catalog-cancel-btn').hidden = true;
+}
+
+async function handleCatalogSubmit(e) {
+  e.preventDefault();
+  if (!fb) { catalogMsg('Firebase belum siap.', true); return; }
+  // Mode edit: pakai ID yang dikunci, pertahankan createdAt lama.
+  const fishId = editingFishId || slugifyFishId($('cf-fishId').value);
+  const name = $('cf-name').value.trim();
+  const rarity = $('cf-rarity').value;
+  const imagePath = $('cf-image').value.trim();
+  const description = $('cf-desc').value.trim();
+  const scale = Number($('cf-scale').value) || 1;
+  if (!fishId) { catalogMsg('Isi Fish ID (huruf kecil, angka, underscore).', true); return; }
+  if (!name) { catalogMsg('Isi nama ikan.', true); return; }
+  if (!RARITIES.includes(rarity)) { catalogMsg('Pilih rarity yang valid.', true); return; }
+  if (!imagePath) { catalogMsg('Pilih gambar ikan dari dropdown.', true); return; }
+  try {
+    if (editingFishId) {
+      await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
+        fishId, name, rarity, imagePath, description, scale,
+      }, { merge: true });
+      catalogMsg(`Perubahan "${name}" [${rarity}] tersimpan.`);
+    } else {
+      await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
+        fishId, name, rarity, imagePath, description, scale, createdAt: fb.serverTimestamp(),
+      });
+      catalogMsg(`${name} [${rarity}] tersimpan ke fish_catalog.`);
+    }
+    cancelEditFish();
+  } catch (err) {
+    console.warn(err);
+    catalogMsg(`Gagal menyimpan${firestoreErrHint(err)}.`, true);
+  }
+}
+
+async function deleteFish(fishId, name) {
+  if (!fb || !fishId) return;
+  const ok = await confirmAction({
+    title: 'Hapus Ikan?',
+    message: `Hapus "${name}" (${fishId}) dari fish_catalog? Ikan ini tak lagi muncul di gacha & gift.`,
+    okText: 'Ya, Hapus',
+  });
+  if (!ok) return;
+  try {
+    await fb.deleteDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId));
+    if (editingFishId === fishId) cancelEditFish();
+    catalogMsg(`"${name}" dihapus dari fish_catalog.`);
+  } catch (err) {
+    console.warn(err);
+    toast(`Gagal menghapus${firestoreErrHint(err)}.`, true);
+  }
+}
+
+/* ---------- INIT ---------- */
+async function init() {
+  $('admin-guard-msg').style.display = '';
+  renderGiftOptions();
+  renderCatalog();
+  fb = await getFirebase();
+  if (!fb) {
+    $('admin-guard-msg').innerHTML = '<p>Firebase belum dikonfigurasi. Isi <code>firebase-config.js</code> untuk memakai Admin Panel.</p>';
+    return;
+  }
+  // Guard: harus login & role admin
+  fb.onAuthStateChanged(fb.auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    try {
+      const snap = await fb.getDoc(fb.doc(fb.db, 'users', user.uid));
+      const data = snap.exists() ? snap.data() : null;
+      if (!data || data.role !== 'admin') { window.location.href = 'index.html'; return; }
+      $('admin-user').textContent = data.username || user.email;
+      $('admin-guard-msg').style.display = 'none';
+      $('admin-content').style.display = '';
+      watchData();
+      watchCatalog();
+    } catch {
+      window.location.href = 'index.html';
+    }
+  });
+
+  $('admin-logout').addEventListener('click', async () => {
+    try { await fb.signOut(fb.auth); } catch {}
+    window.location.href = 'index.html';
+  });
+  $('admin-search').addEventListener('input', (e) => renderTable(e.target.value));
+  $('gift-close').addEventListener('click', closeGift);
+  $('gift-cancel').addEventListener('click', closeGift);
+  $('gift-modal').addEventListener('click', (e) => { if (e.target.id === 'gift-modal') closeGift(); });
+  $('confirm-ok').addEventListener('click', () => closeConfirm(true));
+  $('confirm-cancel').addEventListener('click', () => closeConfirm(false));
+  $('confirm-close').addEventListener('click', () => closeConfirm(false));
+  $('confirm-modal').addEventListener('click', (e) => { if (e.target.id === 'confirm-modal') closeConfirm(false); });
+  $('gift-send').addEventListener('click', async () => {
+    if (!giftUid) return;
+    const fishId = $('gift-fish').value;
+    const def = catalogById(fishId);
+    if (!def) { toast('Ikan tidak ditemukan di katalog.', true); return; }
+    const entry = {
+      instanceId: `fish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id: def.id, name: def.name, nickname: def.name, rarity: def.rarity,
+      trait: TRAITS[Math.floor(Math.random() * TRAITS.length)], acquiredAt: Date.now(),
+    };
+    try {
+      const ref = fb.doc(fb.db, 'users', giftUid);
+      const snap = await fb.getDoc(ref);
+      const cur = snap.exists() ? (snap.data().fishList || []) : [];
+      if (cur.some((f) => f.id === fishId)) { toast('Pemain sudah punya ikan ini.', true); return; }
+      await fb.updateDoc(ref, { fishList: [...cur, entry] });
+      toast(`${def.name} terkirim (real-time).`);
+      closeGift();
+    } catch (err) {
+      console.warn(err);
+      toast('Gagal mengirim ikan.', true);
+    }
+  });
+  $('catalog-form').addEventListener('submit', handleCatalogSubmit);
+  $('catalog-cancel-btn').addEventListener('click', cancelEditFish);
+  populateImageOptions();
+  $('cf-image').addEventListener('change', updateImagePreview);
+  $('cf-fishId').addEventListener('input', (e) => {
+    const clean = slugifyFishId(e.target.value);
+    if (clean !== e.target.value) e.target.value = clean;
+  });
+}
+
+function watchData() {
+  // Stats global
+  fb.onSnapshot(fb.doc(fb.db, 'stats', 'global'), (s) => {
+    $('stat-visits').textContent = s.exists() ? (s.data().visitorCount ?? 0).toLocaleString('id-ID') : '0';
+  });
+  // Daftar pemain (usernames only)
+  fb.onSnapshot(fb.collection(fb.db, 'users'), (qs) => {
+    players = [];
+    qs.forEach((d) => {
+      const v = d.data();
+      if (v.role === 'admin') return;
+      players.push({ uid: d.id, ...v });
+    });
+    $('stat-players').textContent = players.length;
+    renderTable($('admin-search').value || '');
+  });
+}
+
+function watchCatalog() {
+  subscribeCatalog(fb, (list) => {
+    // Koleksi kosong -> tetap pakai fallback lokal agar gift bisa dipakai.
+    if (list.length) catalog = list;
+    else catalog = DEFAULT_CATALOG.map((f) => ({ ...normalizeCatalogDoc(f) }));
+    renderCatalog();
+    renderGiftOptions();
+  });
+}
+
+init();

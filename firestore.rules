@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// A QUIET TANK — Firestore Rules
+// Deploy: firebase deploy --only firestore:rules
+// (atau tempel isi file ini di Firebase Console > Firestore > Rules)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Profil pemain: pemilik + admin.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Katalog ikan dinamis: dibaca publik (gacha butuh),
+    // ditulis hanya oleh admin (form admin.html).
+    // Dokumen: fishId, name, rarity, imagePath,
+    //          description, createdAt (+ scale opsional).
+    // Rarity valid: Common, Rare, Epic, Legendary, Heaven.
+    match /fish_catalog/{fishId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && (!('rarity' in request.resource.data)
+            || request.resource.data.rarity in ['Common', 'Rare', 'Epic', 'Legendary', 'Heaven']);
+      allow delete: if isAdmin();
+    }
+
+    // Statistik global: publik boleh membaca + bump
+    // visitorCount (dipakai game), sisanya hanya admin.
+    match /stats/{docId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        || request.resource.data.keys().hasOnly(['visitorCount']);
+      allow update: if isAdmin()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visitorCount']);
+      allow delete: if isAdmin();
+    }
+  }
+}

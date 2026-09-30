@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin AQTIJ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body">
+    <div id="admin-root" style="width:100%;max-width:960px;margin:0 auto;">
+        <header class="admin-topbar">
+            <div class="admin-topbar-left">
+                <span class="admin-logo">ADMIN foolstuck</span>
+            </div>
+            <div class="admin-topbar-right">
+                <span id="admin-user" class="admin-user">…</span>
+                <button id="admin-logout" class="btn-admin btn-admin-secondary">Logout</button>
+            </div>
+        </header>
+
+        <div id="admin-guard-msg" class="admin-section" style="padding:24px;display:none;">
+            <p>Memeriksa akses admin…</p>
+        </div>
+
+        <div id="admin-content" style="display:none;">
+            <section class="admin-stats">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Total Kunjungan Web</div>
+                    <div id="stat-visits" class="admin-stat-value">–</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Total Pemain Terdaftar</div>
+                    <div id="stat-players" class="admin-stat-value">–</div>
+                </div>
+            </section>
+
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2 class="admin-section-title">Daftar Pemain</h2>
+                    <div class="admin-search">
+                        <input id="admin-search" type="text" placeholder="Cari User…" autocomplete="off">
+                    </div>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Tanggal Daftar</th>
+                                <th>Terakhir Aktif</th>
+                                <th>Ikan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-tbody">
+                            <tr><td colspan="5">Memuat…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <h2 class="admin-section-title">Katalog Ikan (fish_catalog)</h2>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Fish ID</th>
+                                <th>Nama</th>
+                                <th>Rarity</th>
+                                <th>Gambar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalog-tbody">
+                            <tr><td colspan="5">Memuat…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <form id="catalog-form" class="catalog-form" autocomplete="off">
+                    <h3 id="catalog-form-title" class="catalog-form-title">Tambah Ikan Baru</h3>
+                    <div class="catalog-form-grid">
+                        <label class="gift-modal-field">
+                            <span class="gift-modal-label">Fish ID</span>
+                            <input id="cf-fishId" class="gift-modal-input" maxlength="40" placeholder="mis. nemo_emas" required>
+                        </label>
+                        <label class="gift-modal-field">
+                            <span class="gift-modal-label">Nama</span>
+                            <input id="cf-name" class="gift-modal-input" maxlength="40" placeholder="mis. Nemo Emas" required>
+                        </label>
+                        <label class="gift-modal-field">
+                            <span class="gift-modal-label">Rarity</span>
+                            <select id="cf-rarity" class="gift-modal-select" required>
+                                <option value="Common">Common — 50%</option>
+                                <option value="Rare">Rare — 30%</option>
+                                <option value="Epic">Epic — 13%</option>
+                                <option value="Legendary">Legendary — 6%</option>
+                                <option value="Heaven">Heaven — 1%</option>
+                            </select>
+                        </label>
+                        <label class="gift-modal-field gift-modal-field-full">
+                            <span class="gift-modal-label">Gambar</span>
+                            <div class="catalog-image-row">
+                                <select id="cf-image" class="gift-modal-select" required>
+                                    <option value="">Memuat daftar gambar…</option>
+                                </select>
+                                <img id="cf-preview" class="catalog-preview" alt="Pratinjau ikan" hidden>
+                            </div>
+                        </label>
+                        <label class="gift-modal-field">
+                            <span class="gift-modal-label">Skala (1 = normal)</span>
+                            <input id="cf-scale" class="gift-modal-input" type="number" min="0.5" max="3" step="0.1" value="1">
+                        </label>
+                        <label class="gift-modal-field gift-modal-field-full">
+                            <span class="gift-modal-label">Deskripsi</span>
+                            <input id="cf-desc" class="gift-modal-input" maxlength="120" placeholder="Deskripsi singkat ikan...">
+                        </label>
+                    </div>
+                    <div class="catalog-form-actions">
+                        <button type="submit" id="catalog-submit-btn" class="btn-admin">Simpan ke Katalog</button>
+                        <button type="button" id="catalog-cancel-btn" class="btn-admin btn-admin-secondary" hidden>Batal Edit</button>
+                        <span id="catalog-msg" class="save-msg" hidden></span>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Gift Fish Modal -->
+    <div id="gift-modal" class="gift-modal" aria-hidden="true">
+        <div class="gift-modal-dialog" role="dialog" aria-labelledby="gift-title">
+            <div class="gift-modal-header">
+                <h3 id="gift-title" class="gift-modal-title">🎁 Gift Fish</h3>
+                <button id="gift-close" class="gift-modal-close" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="gift-modal-body">
+                <div class="gift-modal-field">
+                    <label class="gift-modal-label" for="gift-target">Target</label>
+                    <input id="gift-target" class="gift-modal-input" readonly>
+                </div>
+                <div class="gift-modal-field">
+                    <label class="gift-modal-label" for="gift-fish">Pilih Ikan</label>
+                    <select id="gift-fish" class="gift-modal-select">
+                        <option value="">Memuat katalog…</option>
+                    </select>
+                </div>
+            </div>
+            <div class="gift-modal-actions">
+                <button id="gift-cancel" class="btn-admin btn-admin-secondary">Batal</button>
+                <button id="gift-send" class="btn-admin">Kirim Ikan Ke Pemain</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+
+    <!-- Konfirmasi styled (pengganti window.confirm) -->
+    <div id="confirm-modal" class="gift-modal" aria-hidden="true">
+        <div class="gift-modal-dialog confirm-dialog" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+            <div class="gift-modal-header">
+                <h3 id="confirm-title" class="gift-modal-title">Hapus?</h3>
+                <button id="confirm-close" class="gift-modal-close" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="gift-modal-body">
+                <p id="confirm-msg" class="confirm-msg"></p>
+            </div>
+            <div class="gift-modal-actions">
+                <button id="confirm-cancel" class="btn-admin btn-admin-secondary">Batal</button>
+                <button id="confirm-ok" class="btn-admin btn-admin-danger">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
