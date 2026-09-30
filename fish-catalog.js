@@ -36,21 +36,16 @@ export const CATALOG_COLLECTION = 'fish_catalog';
    Dipakai admin.js untuk mengisi dropdown "Gambar" + preview.
    Versi `_tight` (sprite) diutamakan di urutan atas. */
 export const FISH_IMAGE_PATHS = [
-  'assets/fish/Neon Tetra (common)_tight.png',
-  'assets/fish/arwarna (legend)_tight.png',
-  'assets/fish/corydoras (uncommon)_tight.png',
-  'assets/fish/cupang glow (heaven)_tight.png',
-  'assets/fish/koki (rare)_tight.png',
-  'assets/fish/manfish (uncommon)_tight.png',
-  'assets/fish/Neon Tetra (common).png',
-  'assets/fish/arwarna (legend).png',
-  'assets/fish/corydoras (uncommon).png',
-  'assets/fish/cupang glow (heaven).png',
-  'assets/fish/koki (rare).png',
-  'assets/fish/manfish (uncommon).png',
+  'assets/fish/1-common/manfish (common)_tight.png',
+  'assets/fish/2-rare/koki (rare)_tight.png',
+  'assets/fish/3-legend/arwarna (legend)_tight.png',
+  'assets/fish/1-common/Neon Tetra (common).png',
+  'assets/fish/1-common/corydoras (common).png',
+  'assets/fish/2-rare/koki (rare).png',
+  'assets/fish/4-heaven/cupang glow (heaven).png',
 ];
 
-export const fishImageLabel = (path) => String(path || '').replace(/^assets\/fish\//, '');
+export const fishImageLabel = (path) => String(path || '').replace(/^.*\//, '');
 
 /* ---------- KATALOG DEFAULT (fallback lokal) ----------
    Dipakai saat Firestore kosong / offline agar gacha
@@ -58,13 +53,13 @@ export const fishImageLabel = (path) => String(path || '').replace(/^assets\/fis
    "cupang glow (heaven)" -> Heaven,
    "arwarna (legend)" -> Legendary. */
 export const DEFAULT_CATALOG = [
-  { id: 'clownfish',   fishId: 'clownfish',   name: 'Clownfish',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/Neon Tetra (common)_tight.png',   description: 'Ikan kecil yang ramah dan aktif.' },
-  { id: 'blue_tang',   fishId: 'blue_tang',   name: 'Blue Tang',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/manfish (uncommon)_tight.png',    description: 'Ikan biru yang tenang.' },
-  { id: 'goldfish',    fishId: 'goldfish',    name: 'Goldfish',         rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/koki (rare)_tight.png',           description: 'Ikan mas hias yang anggun.' },
-  { id: 'betta',       fishId: 'betta',       name: 'Betta',            rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/corydoras (uncommon)_tight.png',  description: 'Petarung kecil yang pemberani.' },
-  { id: 'guppy',       fishId: 'guppy',       name: 'Guppy',            rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/Neon Tetra (common)_tight.png',   description: 'Ikan mungil yang lincah.' },
-  { id: 'arwana',      fishId: 'arwana',      name: 'Ikan Arwana',      rarity: 'Legendary', scale: 2.3, imagePath: 'assets/fish/arwarna (legend)_tight.png',     description: 'Legendaris, gagah dan memukau.' },
-  { id: 'cupang_glow', fishId: 'cupang_glow', name: 'Ikan Cupang Glow', rarity: 'Heaven',    scale: 1,   imagePath: 'assets/fish/cupang glow (heaven)_tight.png', description: 'Surgawi, memancarkan aura keemasan.' },
+  { id: 'clownfish',   fishId: 'clownfish',   name: 'Clownfish',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',   description: 'Ikan kecil yang ramah dan aktif.' },
+  { id: 'blue_tang',   fishId: 'blue_tang',   name: 'Blue Tang',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/manfish (common)_tight.png', description: 'Ikan biru yang tenang.' },
+  { id: 'goldfish',    fishId: 'goldfish',    name: 'Goldfish',         rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/2-rare/koki (rare)_tight.png',        description: 'Ikan mas hias yang anggun.' },
+  { id: 'betta',       fishId: 'betta',       name: 'Betta',            rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/1-common/corydoras (common).png',     description: 'Petarung kecil yang pemberani.' },
+  { id: 'guppy',       fishId: 'guppy',       name: 'Guppy',            rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',   description: 'Ikan mungil yang lincah.' },
+  { id: 'arwana',      fishId: 'arwana',      name: 'Ikan Arwana',      rarity: 'Legendary', scale: 2.3, imagePath: 'assets/fish/3-legend/arwarna (legend)_tight.png', description: 'Legendaris, gagah dan memukau.' },
+  { id: 'cupang_glow', fishId: 'cupang_glow', name: 'Ikan Cupang Glow', rarity: 'Heaven',    scale: 1,   imagePath: 'assets/fish/4-heaven/cupang glow (heaven).png',  description: 'Surgawi, memancarkan aura keemasan.' },
 ];
 
 export function isValidRarity(r) {
