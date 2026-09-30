@@ -1831,7 +1831,7 @@ body {
   color: var(--text-main);
   line-height: 1.5;
   min-height: 100vh;
-  padding: var(--space-md);
+  padding: var(--space-md) var(--space-sm);
 }
 
 .admin-topbar {
@@ -2006,9 +2006,21 @@ body {
 
 .admin-table th,
 .admin-table td {
-  padding: var(--space-md) var(--space-lg);
+  padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border);
+}
+
+/* Kolom aksi: tombol selalu sebaris, tidak menumpuk */
+.admin-table td:last-child {
+  white-space: nowrap;
+}
+
+/* Kolom path gambar: boleh wrap agar tak memaksa tabel melebar */
+.admin-table .path-cell {
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .admin-table th {

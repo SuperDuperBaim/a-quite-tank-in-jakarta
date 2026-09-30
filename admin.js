@@ -178,6 +178,7 @@ function renderCatalog() {
       tr.children[0].textContent = f.id;
       tr.children[1].textContent = f.name;
       tr.children[3].textContent = f.imagePath;
+      tr.children[3].className = 'path-cell';
       const edit = document.createElement('button');
       edit.className = 'btn-admin action-btn';
       edit.textContent = 'Edit';
