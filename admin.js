@@ -17,6 +17,7 @@ const TRAITS = ['playful', 'skittish', 'sleepy', 'glutton'];
 let fb = null;
 let players = [];
 let giftUid = null;
+let giftType = 'fish';
 let editingFishId = null;
 // ID yang benar-benar ada di Firestore (bukan fallback lokal).
 let remoteIds = new Set();
@@ -80,7 +81,7 @@ function renderTable(filter = '') {
   const tb = $('admin-tbody');
   const q = filter.trim().toLowerCase();
   const rows = players.filter((p) => !q || (p.username || '').toLowerCase().includes(q));
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5">Tidak ada pemain.</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="6">Tidak ada pemain.</td></tr>'; return; }
   tb.innerHTML = '';
   rows.forEach((p) => {
     const tr = document.createElement('tr');
@@ -89,13 +90,15 @@ function renderTable(filter = '') {
       `<td>${fmtDate(p.createdAt)}</td>` +
       `<td>${fmtActive(p.lastOnline)}</td>` +
       `<td class="fish-count">${(p.fishList || []).length}</td>` +
+      `<td class="fish-count">🪙 ${typeof p.coins === 'number' ? p.coins : 0}</td>` +
       '<td></td>';
     tr.children[0].textContent = p.username || '(tanpa nama)';
     const btn = document.createElement('button');
     btn.className = 'btn-admin action-btn';
     btn.textContent = '🎁 Gift';
-    btn.addEventListener('click', () => openGift(p.uid, p.username));
-    tr.children[4].appendChild(btn);
+    btn.title = 'Gift ikan / koin';
+    btn.addEventListener('click', () => openGift(p.uid, p.username, 'fish'));
+    tr.children[5].appendChild(btn);
     tb.appendChild(tr);
   });
 }
@@ -115,15 +118,83 @@ function renderGiftOptions() {
   if (catalogById(prev)) sel.value = prev;
 }
 
-function openGift(uid, username) {
+function updateGiftUI() {
+  const isCoin = giftType === 'coin';
+  const fishWrap = $('gift-fish-wrap');
+  const coinWrap = $('gift-coin-wrap');
+  const typeSel = $('gift-type');
+  const sendBtn = $('gift-send');
+  const title = $('gift-title');
+  if (fishWrap) fishWrap.hidden = isCoin;
+  if (coinWrap) coinWrap.hidden = !isCoin;
+  if (typeSel && typeSel.value !== giftType) typeSel.value = giftType;
+  if (sendBtn) sendBtn.textContent = isCoin ? 'Kirim Koin Ke Pemain' : 'Kirim Ikan Ke Pemain';
+  if (title) title.textContent = isCoin ? '🪙 Gift Coin' : '🎁 Gift Fish';
+  if (isCoin && giftUid) {
+    const p = players.find((x) => x.uid === giftUid);
+    const cur = p && typeof p.coins === 'number' ? p.coins : 0;
+    const info = $('gift-current-coins');
+    if (info) info.textContent = `Koin ${p?.username || 'pemain'} saat ini: 🪙 ${cur}`;
+  }
+}
+
+function openGift(uid, username, type = 'fish') {
   giftUid = uid;
+  giftType = type === 'coin' ? 'coin' : 'fish';
   renderGiftOptions();
   $('gift-target').value = username;
+  updateGiftUI();
   $('gift-modal').setAttribute('aria-hidden', 'false');
 }
 function closeGift() {
   giftUid = null;
   $('gift-modal').setAttribute('aria-hidden', 'true');
+}
+
+async function sendGiftCoin() {
+  const amount = Math.floor(Number($('gift-coins')?.value) || 0);
+  if (!giftUid) return;
+  if (!amount || amount < 1) { toast('Jumlah koin minimal 1.', true); return; }
+  if (amount > 9999) { toast('Maksimal 9999 koin sekali kirim.', true); return; }
+  try {
+    const ref = fb.doc(fb.db, 'users', giftUid);
+    if (fb.increment) {
+      await fb.updateDoc(ref, { coins: fb.increment(amount) });
+    } else {
+      const snap = await fb.getDoc(ref);
+      const cur = snap.exists() && typeof snap.data().coins === 'number' ? snap.data().coins : 0;
+      await fb.updateDoc(ref, { coins: cur + amount });
+    }
+    const p = players.find((x) => x.uid === giftUid);
+    toast(`🪙 ${amount} koin terkirim ke ${p?.username || 'pemain'} (real-time).`);
+    closeGift();
+  } catch (err) {
+    console.warn(err);
+    toast(`Gagal mengirim koin${firestoreErrHint(err)}.`, true);
+  }
+}
+
+async function sendGiftFish() {
+  const fishId = $('gift-fish').value;
+  const def = catalogById(fishId);
+  if (!def) { toast('Ikan tidak ditemukan di katalog.', true); return; }
+  const entry = {
+    instanceId: `fish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    id: def.id, name: def.name, nickname: def.name, rarity: def.rarity,
+    trait: TRAITS[Math.floor(Math.random() * TRAITS.length)], acquiredAt: Date.now(),
+  };
+  try {
+    const ref = fb.doc(fb.db, 'users', giftUid);
+    const snap = await fb.getDoc(ref);
+    const cur = snap.exists() ? (snap.data().fishList || []) : [];
+    if (cur.some((f) => f.id === fishId)) { toast('Pemain sudah punya ikan ini.', true); return; }
+    await fb.updateDoc(ref, { fishList: [...cur, entry] });
+    toast(`${def.name} terkirim (real-time).`);
+    closeGift();
+  } catch (err) {
+    console.warn(err);
+    toast(`Gagal mengirim ikan${firestoreErrHint(err)}.`, true);
+  }
 }
 
 /* ---------- DROPDOWN GAMBAR + PREVIEW ---------- */
@@ -420,28 +491,20 @@ async function init() {
   $('confirm-cancel').addEventListener('click', () => closeConfirm(false));
   $('confirm-close').addEventListener('click', () => closeConfirm(false));
   $('confirm-modal').addEventListener('click', (e) => { if (e.target.id === 'confirm-modal') closeConfirm(false); });
+  $('gift-type')?.addEventListener('change', (e) => {
+    giftType = e.target.value === 'coin' ? 'coin' : 'fish';
+    updateGiftUI();
+  });
+  document.querySelectorAll('#gift-coin-wrap [data-coin]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const input = $('gift-coins');
+      if (input) input.value = String(b.getAttribute('data-coin'));
+    });
+  });
   $('gift-send').addEventListener('click', async () => {
     if (!giftUid) return;
-    const fishId = $('gift-fish').value;
-    const def = catalogById(fishId);
-    if (!def) { toast('Ikan tidak ditemukan di katalog.', true); return; }
-    const entry = {
-      instanceId: `fish_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      id: def.id, name: def.name, nickname: def.name, rarity: def.rarity,
-      trait: TRAITS[Math.floor(Math.random() * TRAITS.length)], acquiredAt: Date.now(),
-    };
-    try {
-      const ref = fb.doc(fb.db, 'users', giftUid);
-      const snap = await fb.getDoc(ref);
-      const cur = snap.exists() ? (snap.data().fishList || []) : [];
-      if (cur.some((f) => f.id === fishId)) { toast('Pemain sudah punya ikan ini.', true); return; }
-      await fb.updateDoc(ref, { fishList: [...cur, entry] });
-      toast(`${def.name} terkirim (real-time).`);
-      closeGift();
-    } catch (err) {
-      console.warn(err);
-      toast('Gagal mengirim ikan.', true);
-    }
+    if (giftType === 'coin') { await sendGiftCoin(); return; }
+    await sendGiftFish();
   });
   $('catalog-form').addEventListener('submit', handleCatalogSubmit);
   $('catalog-cancel-btn').addEventListener('click', cancelEditFish);

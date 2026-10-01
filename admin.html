@@ -49,11 +49,12 @@
                                 <th>Tanggal Daftar</th>
                                 <th>Terakhir Aktif</th>
                                 <th>Ikan</th>
+                                <th>Koin</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="admin-tbody">
-                            <tr><td colspan="5">Memuat…</td></tr>
+                            <tr><td colspan="6">Memuat…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -130,11 +131,11 @@
         </div>
     </div>
 
-    <!-- Gift Fish Modal -->
+    <!-- Gift Modal (Ikan + Koin) -->
     <div id="gift-modal" class="gift-modal" aria-hidden="true">
         <div class="gift-modal-dialog" role="dialog" aria-labelledby="gift-title">
             <div class="gift-modal-header">
-                <h3 id="gift-title" class="gift-modal-title">🎁 Gift Fish</h3>
+                <h3 id="gift-title" class="gift-modal-title">🎁 Gift Pemain</h3>
                 <button id="gift-close" class="gift-modal-close" aria-label="Tutup">&times;</button>
             </div>
             <div class="gift-modal-body">
@@ -143,15 +144,33 @@
                     <input id="gift-target" class="gift-modal-input" readonly>
                 </div>
                 <div class="gift-modal-field">
+                    <label class="gift-modal-label" for="gift-type">Jenis Gift</label>
+                    <select id="gift-type" class="gift-modal-select">
+                        <option value="fish">🐟 Ikan</option>
+                        <option value="coin">🪙 Koin</option>
+                    </select>
+                </div>
+                <div id="gift-fish-wrap" class="gift-modal-field">
                     <label class="gift-modal-label" for="gift-fish">Pilih Ikan</label>
                     <select id="gift-fish" class="gift-modal-select">
                         <option value="">Memuat katalog…</option>
                     </select>
                 </div>
+                <div id="gift-coin-wrap" class="gift-modal-field" hidden>
+                    <label class="gift-modal-label" for="gift-coins">Jumlah Koin</label>
+                    <input id="gift-coins" class="gift-modal-input" type="number" min="1" max="9999" step="1" value="10" inputmode="numeric">
+                    <p id="gift-current-coins" class="catalog-source" style="padding:0;"></p>
+                    <div class="catalog-form-actions" style="gap:6px;justify-content:flex-start;">
+                        <button type="button" class="btn-admin btn-admin-secondary action-btn" data-coin="1">+1</button>
+                        <button type="button" class="btn-admin btn-admin-secondary action-btn" data-coin="5">+5</button>
+                        <button type="button" class="btn-admin btn-admin-secondary action-btn" data-coin="10">+10</button>
+                        <button type="button" class="btn-admin btn-admin-secondary action-btn" data-coin="50">+50</button>
+                    </div>
+                </div>
             </div>
             <div class="gift-modal-actions">
                 <button id="gift-cancel" class="btn-admin btn-admin-secondary">Batal</button>
-                <button id="gift-send" class="btn-admin">Kirim Ikan Ke Pemain</button>
+                <button id="gift-send" class="btn-admin">Kirim Gift</button>
             </div>
         </div>
     </div>

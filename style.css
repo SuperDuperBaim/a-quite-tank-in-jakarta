@@ -643,8 +643,8 @@ body {
 }
 
 .gacha-result {
-  width: clamp(220px, 35vw, 300px);
-  height: clamp(220px, 35vw, 300px);
+  width: clamp(260px, 85vw, 360px);
+  min-height: clamp(240px, 42vw, 320px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -653,8 +653,8 @@ body {
 
 .gacha-egg {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: clamp(200px, 35vw, 260px);
+  height: clamp(200px, 35vw, 260px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -676,12 +676,21 @@ body {
   50% { transform: translateY(-10px) rotate(1.5deg); }
 }
 
-.gacha-fish {
+.gacha-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   width: 100%;
-  height: 100%;
+}
+
+.gacha-fish {
+  width: clamp(190px, 48vw, 280px);
+  height: clamp(150px, 30vw, 210px);
   object-fit: contain;
   animation: fishReveal var(--transition-slow) ease-out;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
 }
 
 @keyframes fishReveal {
@@ -689,29 +698,120 @@ body {
   to { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
+/* Plakat / Informasi Ikan Gacha (Tanpa background card) */
+.gacha-info-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  animation: gachaCardPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  animation-delay: 0.12s;
+  max-width: 90vw;
+  text-align: center;
+}
+
+@keyframes gachaCardPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .gacha-fish-name {
-  margin-top: var(--space-md);
+  margin: 0;
   font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
   font-weight: 800;
-  font-size: clamp(1.3rem, 4vw, 1.8rem);
-  -webkit-text-stroke: 1.5px #5A3A22;
+  font-size: clamp(1.6rem, 5.5vw, 2.3rem);
+  color: #FFF5D6;
+  -webkit-text-stroke: 2px #5A3A22;
   paint-order: stroke fill;
   text-shadow:
-    1px 1px 0px #5A3A22,
-    -1px -1px 0px #5A3A22,
-    0 4px 10px rgba(45, 25, 10, 0.4);
-  animation: fadeIn var(--transition-normal);
+    2px 2px 0px #5A3A22,
+    -2px -2px 0px #5A3A22,
+    2px -2px 0px #5A3A22,
+    -2px 2px 0px #5A3A22,
+    0 6px 14px rgba(45, 25, 10, 0.5);
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .gacha-fish-rarity {
-  font-family: var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 20px;
+  border-radius: 999px;
+  font-family: 'Fredoka', 'Quicksand', system-ui, sans-serif;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #FFF5D6;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  margin-top: var(--space-xs);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  margin-top: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.gacha-fish-rarity .rarity-icon {
+  font-size: 0.78rem;
+  line-height: 1;
+  opacity: 0.95;
+}
+
+/* Rarity Badges */
+.gacha-fish-rarity.rarity-common {
+  background: linear-gradient(135deg, #7A8999 0%, #4D5B68 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+
+.gacha-fish-rarity.rarity-rare {
+  background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%);
+  border: 1.5px solid rgba(186, 230, 253, 0.65);
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.45);
+}
+
+.gacha-fish-rarity.rarity-epic {
+  background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+  border: 1.5px solid rgba(233, 213, 255, 0.65);
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.45);
+}
+
+.gacha-fish-rarity.rarity-legendary {
+  background: linear-gradient(135deg, #F97316 0%, #C2410C 100%);
+  border: 1.5px solid rgba(254, 215, 170, 0.75);
+  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.5);
+}
+
+.gacha-fish-rarity.rarity-heaven {
+  background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
+  color: #382414;
+  border: 1.5px solid #FEF08A;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.75), 0 2px 6px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  animation: heavenBadgePulse 2s infinite ease-in-out;
+}
+
+@keyframes heavenBadgePulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.75), 0 2px 6px rgba(0, 0, 0, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(251, 191, 36, 0.95), 0 3px 8px rgba(0, 0, 0, 0.25);
+    transform: scale(1.05);
+  }
 }
 
 /* Hasil gacha Heaven: bingkai cahaya keemasan */

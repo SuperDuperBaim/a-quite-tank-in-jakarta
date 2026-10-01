@@ -20,14 +20,14 @@ export const RARITY_WEIGHTS = {
 };
 
 export const RARITY_COLORS = {
-  Common: '#8B7D6B',
-  Rare: '#4DA3C4',
-  Epic: '#9B5DE5',
-  Legendary: '#D48828',
-  Heaven: '#E8B400',
+  Common: '#536270',
+  Rare: '#0284C7',
+  Epic: '#9333EA',
+  Legendary: '#EA580C',
+  Heaven: '#D97706',
   // Warna legacy (save lama): Uncommon -> Rare, Special -> Legendary.
-  Uncommon: '#4DA3C4',
-  Special: '#D48828',
+  Uncommon: '#0284C7',
+  Special: '#EA580C',
 };
 
 export const CATALOG_COLLECTION = 'fish_catalog';

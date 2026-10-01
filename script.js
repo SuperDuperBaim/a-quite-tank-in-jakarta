@@ -65,7 +65,17 @@ import {
     t('rarity_' + String(rarity || '').toLowerCase()) !== ('rarity_' + String(rarity || '').toLowerCase())
       ? t('rarity_' + String(rarity || '').toLowerCase())
       : (RARITY_FALLBACK_LABEL[rarity] || rarity);
-  const rarityColor = (rarity) => RARITY_COLORS[rarity] || '#8B7D6B';
+  const rarityColor = (rarity) => RARITY_COLORS[rarity] || '#536270';
+  const RARITY_ICONS = {
+    Common: '◆',
+    Rare: '✦',
+    Epic: '★',
+    Legendary: '👑',
+    Heaven: '🌟',
+    Uncommon: '✦',
+    Special: '👑',
+  };
+  const rarityIcon = (rarity) => RARITY_ICONS[rarity] || '◆';
 
   const TIME_PERIODS = {
     MORNING:   { start: 5, end: 11,   label: 'Morning',   bg: 'assets/background/morning.png' },
@@ -1563,14 +1573,18 @@ import {
       pendingFish = rollFishFromCatalog(fishCatalog) || fishCatalog[0] || FISH_DEFS[0];
       if (!pendingFish) return;
       const displayName = fishDisplayName(pendingFish.id);
-      const rColor = rarityColor(pendingFish.rarity);
       const rLabel = rarityLabel(pendingFish.rarity);
+      const rIcon = rarityIcon(pendingFish.rarity);
+      const rawRarity = String(pendingFish.rarity || 'common').toLowerCase();
+      const rarityKey = rawRarity === 'uncommon' ? 'rare' : (rawRarity === 'special' ? 'legendary' : rawRarity);
       const heavenClass = pendingFish.rarity === 'Heaven' ? ' gacha-heaven' : '';
       els.gachaResult.innerHTML =
-        `<div class="gacha-reveal${heavenClass}" style="display:flex;flex-direction:column;align-items:center;gap:8px">` +
+        `<div class="gacha-reveal${heavenClass}">` +
         `<img class="gacha-fish" src="${pendingFish.src}" alt="${displayName}" onerror="this.onerror=null;this.src='assets/fish/1-common/manfish (common)_tight.png'">` +
+        `<div class="gacha-info-card">` +
         `<div class="gacha-fish-name">${displayName}</div>` +
-        `<div class="gacha-fish-rarity" style="color:${rColor}">◆ ${rLabel}</div></div>`;
+        `<div class="gacha-fish-rarity rarity-${rarityKey}"><span class="rarity-icon">${rIcon}</span><span>${rLabel}</span></div>` +
+        `</div></div>`;
       els.gachaBtn.hidden = true; els.keepFishBtn.hidden = false;
     });
     els.keepFishBtn?.addEventListener('click', async () => {
