@@ -529,7 +529,28 @@ import {
       const img = document.createElement('img');
       img.className = 'fish-sprite'; img.alt = f.nickname || fishDisplayName(def.id); img.src = def.src;
       img.style.setProperty('--fish-scale', def.scale || 1);
-      img.onerror = () => { if (!img.src.includes(encodeURI(def.originalSrc))) img.src = def.originalSrc; };
+      let retryCount = 0;
+      img.onerror = () => {
+        retryCount++;
+        if (retryCount === 1) {
+          if (def.src.includes('_tight.png')) {
+            img.src = def.src.replace('_tight.png', '.png');
+          } else if (def.src.includes('.png')) {
+            img.src = def.src.replace('.png', '_tight.png');
+          }
+        } else if (retryCount === 2) {
+          const fb = DEFAULT_CATALOG.find((d) => d.id === def.id || d.fishId === def.id);
+          if (fb && fb.imagePath && fb.imagePath !== img.src) {
+            img.src = fb.imagePath;
+          } else {
+            img.src = 'assets/fish/1-common/manfish (common)_tight.png';
+          }
+        } else if (retryCount === 3) {
+          img.src = 'assets/fish/1-common/manfish (common)_tight.png';
+        } else {
+          img.style.opacity = '0';
+        }
+      };
       wrap.appendChild(img);
       // Tap langsung pada ikan (PRD A.2)
       wrap.addEventListener('pointerdown', (e) => { e.stopPropagation(); onFishTap(wrap, f, e); });
@@ -1545,7 +1566,7 @@ import {
       const heavenClass = pendingFish.rarity === 'Heaven' ? ' gacha-heaven' : '';
       els.gachaResult.innerHTML =
         `<div class="gacha-reveal${heavenClass}" style="display:flex;flex-direction:column;align-items:center;gap:8px">` +
-        `<img class="gacha-fish" src="${pendingFish.src}" alt="${displayName}" onerror="this.onerror=null;this.src='${pendingFish.originalSrc}'">` +
+        `<img class="gacha-fish" src="${pendingFish.src}" alt="${displayName}" onerror="this.onerror=null;this.src='assets/fish/1-common/manfish (common)_tight.png'">` +
         `<div class="gacha-fish-name">${displayName}</div>` +
         `<div class="gacha-fish-rarity" style="color:${rColor}">◆ ${rLabel}</div></div>`;
       els.gachaBtn.hidden = true; els.keepFishBtn.hidden = false;

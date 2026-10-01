@@ -347,31 +347,49 @@
         <div id="howto-modal" class="settings-modal howto-modal" aria-hidden="true">
             <div class="settings-backdrop" id="howto-backdrop"></div>
             <div class="settings-dialog howto-dialog" role="dialog" aria-labelledby="howto-title">
-                <div class="settings-header">
-                    <h3 id="howto-title" data-i18n="howto_title">Cara Bermain</h3>
+                <div class="howto-header">
+                    <div class="howto-header-badge">📖</div>
+                    <div class="howto-header-text">
+                        <h3 id="howto-title" data-i18n="howto_title">Cara Bermain</h3>
+                        <p class="howto-header-subtitle" data-i18n="howto_subtitle">Panduan merawat ikan & koin harian</p>
+                    </div>
                     <button id="howto-close-btn" class="settings-close" aria-label="Close guide">&times;</button>
                 </div>
                 <div class="howto-body">
-                    <div class="howto-section">
-                        <h4 class="howto-subtitle">🎮 <span data-i18n="howto_play_title">Cara Bermain</span></h4>
+                    <div class="howto-card howto-care-card">
+                        <div class="howto-card-header">
+                            <span class="howto-card-icon">🐟</span>
+                            <h4 class="howto-subtitle" data-i18n="howto_play_title">Cara Bermain</h4>
+                        </div>
                         <ul class="howto-list">
-                            <li data-i18n="howto_play_1">🍞 Kasih makan ikan pakai tombol Feed (pakai 1 stok makanan).</li>
-                            <li data-i18n="howto_play_2">💧 Jaga kebersihan air — air pulih sendiri, tapi tiap Feed bikin -12%.</li>
-                            <li data-i18n="howto_play_3">🍱 Stok habis? Klaim makanan gratis tiap 4 jam.</li>
-                            <li data-i18n="howto_play_4">👆 Ketuk kaca / ikannya — tiap ikan punya sifat unik!</li>
-                            <li data-i18n="howto_play_5">⚠️ Lapar 0% = ikan pergi. Jangan sampai kelaparan!</li>
+                            <li class="howto-item" data-i18n="howto_play_1">🍞 Kasih makan ikan pakai tombol Feed (pakai 1 stok makanan).</li>
+                            <li class="howto-item" data-i18n="howto_play_2">💧 Jaga kebersihan air — air pulih sendiri, tapi tiap Feed bikin -12%.</li>
+                            <li class="howto-item" data-i18n="howto_play_3">🍱 Stok habis? Klaim makanan gratis tiap 4 jam.</li>
+                            <li class="howto-item" data-i18n="howto_play_4">👆 Ketuk kaca / ikannya — tiap ikan punya sifat unik!</li>
+                            <li class="howto-item howto-item-warn" data-i18n="howto_play_5">⚠️ Lapar 0% = ikan pergi. Jangan sampai kelaparan!</li>
                         </ul>
                     </div>
-                    <div class="howto-section howto-coins">
-                        <h4 class="howto-subtitle">🪙 <span data-i18n="howto_coins_title">Cara Dapat Koin</span></h4>
-                        <ul class="howto-list">
-                            <li data-i18n="howto_coin_1">🌅 Login hari berbeda: +1 koin.</li>
-                            <li data-i18n="howto_coin_2">🍽️ Kasih makan 2x sehari: +1 koin.</li>
-                            <li data-i18n="howto_coin_3">✨ Kebersihan air ≥ 80%: +1 koin.</li>
+                    <div class="howto-card howto-coins-card">
+                        <div class="howto-card-header">
+                            <span class="howto-card-icon">🪙</span>
+                            <div class="howto-card-header-row">
+                                <h4 class="howto-subtitle" data-i18n="howto_coins_title">Cara Dapat Koin</h4>
+                                <span class="howto-badge-pill" data-i18n="howto_badge_daily">Harian</span>
+                            </div>
+                        </div>
+                        <ul class="howto-list howto-coins-list">
+                            <li class="howto-item howto-coin-item" data-i18n="howto_coin_1">🌅 Login hari berbeda: +1 koin.</li>
+                            <li class="howto-item howto-coin-item" data-i18n="howto_coin_2">🍽️ Kasih makan 2x sehari: +1 koin.</li>
+                            <li class="howto-item howto-coin-item" data-i18n="howto_coin_3">✨ Kebersihan air ≥ 80%: +1 koin.</li>
                         </ul>
-                        <p class="howto-note" data-i18n="howto_gacha_note">Kumpulkan 10 🪙 untuk Gacha Ikan baru!</p>
+                        <div class="howto-gacha-banner">
+                            <span class="gacha-banner-icon">🎁</span>
+                            <span class="howto-note" data-i18n="howto_gacha_note">Kumpulkan 10 🪙 untuk Gacha Ikan baru!</span>
+                        </div>
                     </div>
-                    <button type="button" id="howto-play-btn" class="btn btn-death-gacha" data-i18n="howto_play_btn">Mengerti, Main! ▶</button>
+                    <div class="howto-footer">
+                        <button type="button" id="howto-play-btn" class="btn btn-howto-play" data-i18n="howto_play_btn">Mengerti, Main! ▶</button>
+                    </div>
                 </div>
             </div>
         </div>
