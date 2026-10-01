@@ -2451,6 +2451,55 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
+/* --- How to Play + Coins Guide Modal --- */
+.howto-dialog {
+  max-width: 380px;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+.howto-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.howto-section {
+  background: rgba(246, 241, 231, 0.6);
+  border: 1px solid rgba(169, 216, 210, 0.45);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.howto-coins {
+  border-color: rgba(233, 196, 106, 0.7);
+  background: rgba(255, 245, 214, 0.55);
+}
+.howto-subtitle {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.howto-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.howto-note {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #8C6212;
+  text-align: center;
+}
+#howto-play-btn { width: 100%; }
+
 /* ========================================
    RESPONSIVE - Admin Panel
    ======================================== */

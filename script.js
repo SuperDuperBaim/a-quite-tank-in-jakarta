@@ -209,9 +209,10 @@ import {
    'login-form','login-username','login-password','login-error','register-form','register-username',
    'register-password','register-confirm','register-error','switch-to-register','switch-to-login','bgm',
    'rain-glass-overlay','weather-badge','weather-icon','weather-text',
-   'snap-btn','journal-btn','journal-modal','journal-backdrop','journal-close-btn','journal-list',
+   'snap-btn','journal-btn','help-btn','journal-modal','journal-backdrop','journal-close-btn','journal-list',
    'photo-overlay','photo-img','photo-caption','photo-save-btn','photo-back-btn',
-   'death-modal','death-backdrop','death-gacha-btn'
+   'death-modal','death-backdrop','death-gacha-btn',
+   'howto-modal','howto-backdrop','howto-close-btn','howto-play-btn'
   ].forEach(id => { els[camel(id)] = $(id); });
   function camel(id) { return id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); }
 
@@ -472,6 +473,18 @@ import {
     refreshWeather();
     maybeStartAmbient();
     checkCleanBonus();
+    // Popup panduan tiap masuk game (sekali per sesi login)
+    if (!state._howtoShown) {
+      state._howtoShown = true;
+      setTimeout(openHowto, 600);
+    }
+  }
+  /* ---------- HOW TO PLAY + COINS GUIDE ---------- */
+  function openHowto() {
+    els.howtoModal?.setAttribute('aria-hidden', 'false');
+  }
+  function closeHowto() {
+    els.howtoModal?.setAttribute('aria-hidden', 'true');
   }
 
   /* ---------- STATUS BAR + DIRT ---------- */
@@ -729,6 +742,7 @@ import {
     persist();
     closeJournal();
     closePhotoMode();
+    try { closeHowto(); } catch {}
     els.settingsModal?.setAttribute('aria-hidden', 'true');
     if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'false');
   }
@@ -905,6 +919,7 @@ import {
       }
     }
     playBGM();
+    state._howtoShown = false;
     if (state._pendingDeathNotice) {
       state._pendingDeathNotice = false;
       showAquarium();
@@ -1367,7 +1382,7 @@ import {
     els.settingsCloseBtn?.addEventListener('click', close);
     els.settingsBackdrop?.addEventListener('click', close);
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
+      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); closeHowto(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
     });
 
     els.volumeSlider?.addEventListener('input', () => {
@@ -1423,7 +1438,9 @@ import {
         dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
       });
       gachaMode = 'first';
+      state._howtoShown = false;
       updateCoinUI();
+      closeHowto();
       close();
       switchAuth('login');
       // Clear form fields
@@ -1549,6 +1566,10 @@ import {
     els.journalBtn?.addEventListener('click', openJournal);
     els.journalCloseBtn?.addEventListener('click', closeJournal);
     els.journalBackdrop?.addEventListener('click', closeJournal);
+    els.helpBtn?.addEventListener('click', openHowto);
+    els.howtoCloseBtn?.addEventListener('click', closeHowto);
+    els.howtoBackdrop?.addEventListener('click', closeHowto);
+    els.howtoPlayBtn?.addEventListener('click', closeHowto);
     els.photoBackBtn?.addEventListener('click', closePhotoMode);
     els.photoSaveBtn?.addEventListener('click', savePhoto);
 
