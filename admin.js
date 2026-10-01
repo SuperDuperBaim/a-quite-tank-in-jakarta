@@ -160,10 +160,47 @@ function updateImagePreview() {
 
 function updateCatalogSource() {
   const el = $('catalog-source');
-  if (!el) return;
-  el.textContent = remoteIds.size
-    ? `Sumber: Firestore (${remoteIds.size} ikan)`
-    : 'Sumber: default lokal — fish_catalog di Firestore masih kosong, tambahkan ikan lewat form di bawah.';
+  const seedBtn = $('catalog-seed-btn');
+  if (el) {
+    el.textContent = remoteIds.size
+      ? `Sumber: Firestore (${remoteIds.size} jenis ikan aktif)`
+      : 'Sumber: default lokal (7 jenis ikan). Mengedit atau menghapus ikan akan otomatis menyimpan data ke Firestore.';
+  }
+  if (seedBtn) {
+    seedBtn.style.display = remoteIds.size ? 'none' : 'inline-block';
+  }
+}
+
+async function seedDefaultCatalog() {
+  if (!fb) { toast('Firebase belum siap.', true); return; }
+  const ok = await confirmAction({
+    title: 'Simpan Default ke Firestore?',
+    message: 'Simpan 7 jenis ikan bawaan ke koleksi Firestore "fish_catalog"? Anda kemudian bisa mengedit, menambah, dan menghapus ikan sesuka hati.',
+    okText: 'Ya, Simpan',
+  });
+  if (!ok) return;
+  try {
+    const batch = fb.writeBatch ? fb.writeBatch(fb.db) : null;
+    for (const f of DEFAULT_CATALOG) {
+      const docRef = fb.doc(fb.db, CATALOG_COLLECTION, f.id);
+      const data = {
+        fishId: f.id,
+        name: f.name,
+        rarity: f.rarity,
+        imagePath: f.imagePath,
+        description: f.description || '',
+        scale: f.scale || 1,
+        createdAt: fb.serverTimestamp(),
+      };
+      if (batch) batch.set(docRef, data);
+      else await fb.setDoc(docRef, data);
+    }
+    if (batch) await batch.commit();
+    toast('Semua ikan default berhasil disimpan ke Firestore.');
+  } catch (err) {
+    console.warn(err);
+    toast(`Gagal menyimpan default${firestoreErrHint(err)}.`, true);
+  }
 }
 
 /* ---------- KATALOG IKAN DINAMIS ---------- */
@@ -240,7 +277,6 @@ function cancelEditFish() {
 async function handleCatalogSubmit(e) {
   e.preventDefault();
   if (!fb) { catalogMsg('Firebase belum siap.', true); return; }
-  // Mode edit: pakai ID yang dikunci, pertahankan createdAt lama.
   const fishId = editingFishId || slugifyFishId($('cf-fishId').value);
   const name = $('cf-name').value.trim();
   const rarity = $('cf-rarity').value;
@@ -251,17 +287,47 @@ async function handleCatalogSubmit(e) {
   if (!name) { catalogMsg('Isi nama ikan.', true); return; }
   if (!RARITIES.includes(rarity)) { catalogMsg('Pilih rarity yang valid.', true); return; }
   if (!imagePath) { catalogMsg('Pilih gambar ikan dari dropdown.', true); return; }
+
   try {
-    if (editingFishId) {
-      await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
-        fishId, name, rarity, imagePath, description, scale,
-      }, { merge: true });
-      catalogMsg(`Perubahan "${name}" [${rarity}] tersimpan.`);
+    if (remoteIds.size === 0) {
+      // Jika sebelumnya masih fallback default lokal, simpan seluruh katalog default + perubahan ke Firestore
+      const batch = fb.writeBatch ? fb.writeBatch(fb.db) : null;
+      const baseList = [...DEFAULT_CATALOG];
+      const existsInDefault = baseList.some((f) => f.id === fishId);
+      if (!existsInDefault) {
+        baseList.push({ id: fishId, name, rarity, imagePath, description, scale });
+      }
+      for (const item of baseList) {
+        const isCurrent = item.id === fishId;
+        const docRef = fb.doc(fb.db, CATALOG_COLLECTION, item.id);
+        const data = isCurrent
+          ? { fishId, name, rarity, imagePath, description, scale, createdAt: fb.serverTimestamp() }
+          : {
+              fishId: item.id,
+              name: item.name,
+              rarity: item.rarity,
+              imagePath: item.imagePath,
+              description: item.description || '',
+              scale: item.scale || 1,
+              createdAt: fb.serverTimestamp(),
+            };
+        if (batch) batch.set(docRef, data);
+        else await fb.setDoc(docRef, data);
+      }
+      if (batch) await batch.commit();
+      catalogMsg(`"${name}" [${rarity}] tersimpan ke Firestore.`);
     } else {
-      await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
-        fishId, name, rarity, imagePath, description, scale, createdAt: fb.serverTimestamp(),
-      });
-      catalogMsg(`${name} [${rarity}] tersimpan ke fish_catalog.`);
+      if (editingFishId) {
+        await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
+          fishId, name, rarity, imagePath, description, scale,
+        }, { merge: true });
+        catalogMsg(`Perubahan "${name}" [${rarity}] tersimpan.`);
+      } else {
+        await fb.setDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId), {
+          fishId, name, rarity, imagePath, description, scale, createdAt: fb.serverTimestamp(),
+        });
+        catalogMsg(`${name} [${rarity}] tersimpan ke fish_catalog.`);
+      }
     }
     cancelEditFish();
   } catch (err) {
@@ -272,19 +338,40 @@ async function handleCatalogSubmit(e) {
 
 async function deleteFish(fishId, name) {
   if (!fb || !fishId) return;
-  // Baris default lokal belum ada di Firestore -> tak ada yang bisa dihapus.
-  if (!remoteIds.has(fishId)) {
-    toast(`"${name}" belum ada di Firestore (data default). Tambahkan dulu lewat form, baru bisa dihapus.`, true);
-    return;
-  }
+
   const ok = await confirmAction({
     title: 'Hapus Ikan?',
     message: `Hapus "${name}" (${fishId}) dari fish_catalog? Ikan ini tak lagi muncul di gacha & gift.`,
     okText: 'Ya, Hapus',
   });
   if (!ok) return;
+
   try {
-    await fb.deleteDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId));
+    if (remoteIds.size === 0 || !remoteIds.has(fishId)) {
+      // Jika Firestore masih kosong / ikan default belum tersimpan:
+      // Simpan semua ikan katalog default LAINNYA ke Firestore agar yang dipilih benar-benar terhapus.
+      const batch = fb.writeBatch ? fb.writeBatch(fb.db) : null;
+      const remaining = catalog.filter((f) => f.id !== fishId);
+      for (const f of remaining) {
+        const docRef = fb.doc(fb.db, CATALOG_COLLECTION, f.id);
+        const data = {
+          fishId: f.id,
+          name: f.name,
+          rarity: f.rarity,
+          imagePath: f.imagePath,
+          description: f.description || '',
+          scale: f.scale || 1,
+          createdAt: fb.serverTimestamp(),
+        };
+        if (batch) batch.set(docRef, data);
+        else await fb.setDoc(docRef, data);
+      }
+      if (batch) await batch.commit();
+      // Pastikan jika ada doc lama dengan ID ini terhapus
+      try { await fb.deleteDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId)); } catch {}
+    } else {
+      await fb.deleteDoc(fb.doc(fb.db, CATALOG_COLLECTION, fishId));
+    }
     if (editingFishId === fishId) cancelEditFish();
     catalogMsg(`"${name}" dihapus dari fish_catalog.`);
   } catch (err) {
@@ -358,6 +445,8 @@ async function init() {
   });
   $('catalog-form').addEventListener('submit', handleCatalogSubmit);
   $('catalog-cancel-btn').addEventListener('click', cancelEditFish);
+  const seedBtn = $('catalog-seed-btn');
+  if (seedBtn) seedBtn.addEventListener('click', seedDefaultCatalog);
   populateImageOptions();
   $('cf-image').addEventListener('change', updateImagePreview);
   $('cf-fishId').addEventListener('input', (e) => {

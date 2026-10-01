@@ -62,6 +62,7 @@
             <section class="admin-section">
                 <div class="admin-section-header">
                     <h2 class="admin-section-title">Katalog Ikan (fish_catalog)</h2>
+                    <button type="button" id="catalog-seed-btn" class="btn-admin btn-admin-secondary" style="font-size:0.8rem;padding:6px 12px;display:none;">📥 Simpan Default ke Firestore</button>
                 </div>
                 <p id="catalog-source" class="catalog-source"></p>
                 <div class="admin-table-wrapper">
@@ -83,15 +84,15 @@
                 <form id="catalog-form" class="catalog-form" autocomplete="off">
                     <h3 id="catalog-form-title" class="catalog-form-title">Tambah Ikan Baru</h3>
                     <div class="catalog-form-grid">
-                        <label class="gift-modal-field">
+                        <label class="gift-modal-field catalog-field-id">
                             <span class="gift-modal-label">Fish ID</span>
                             <input id="cf-fishId" class="gift-modal-input" maxlength="40" placeholder="mis. nemo_emas" required>
                         </label>
-                        <label class="gift-modal-field">
+                        <label class="gift-modal-field catalog-field-name">
                             <span class="gift-modal-label">Nama</span>
                             <input id="cf-name" class="gift-modal-input" maxlength="40" placeholder="mis. Nemo Emas" required>
                         </label>
-                        <label class="gift-modal-field">
+                        <label class="gift-modal-field catalog-field-rarity">
                             <span class="gift-modal-label">Rarity</span>
                             <select id="cf-rarity" class="gift-modal-select" required>
                                 <option value="Common">Common — 50%</option>
@@ -101,20 +102,20 @@
                                 <option value="Heaven">Heaven — 1%</option>
                             </select>
                         </label>
-                        <label class="gift-modal-field gift-modal-field-full">
-                            <span class="gift-modal-label">Gambar</span>
+                        <label class="gift-modal-field catalog-field-image">
+                            <span class="gift-modal-label">Gambar Sprite</span>
                             <div class="catalog-image-row">
                                 <select id="cf-image" class="gift-modal-select" required>
-                                    <option value="">Memuat daftar gambar…</option>
+                                    <option value="">— Pilih gambar —</option>
                                 </select>
                                 <img id="cf-preview" class="catalog-preview" alt="Pratinjau ikan" hidden>
                             </div>
                         </label>
-                        <label class="gift-modal-field">
+                        <label class="gift-modal-field catalog-field-scale">
                             <span class="gift-modal-label">Skala (1 = normal)</span>
                             <input id="cf-scale" class="gift-modal-input" type="number" min="0.5" max="3" step="0.1" value="1">
                         </label>
-                        <label class="gift-modal-field gift-modal-field-full">
+                        <label class="gift-modal-field catalog-field-desc">
                             <span class="gift-modal-label">Deskripsi</span>
                             <input id="cf-desc" class="gift-modal-input" maxlength="120" placeholder="Deskripsi singkat ikan...">
                         </label>

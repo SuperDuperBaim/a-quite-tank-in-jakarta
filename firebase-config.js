@@ -44,6 +44,7 @@ async function loadModules() {
     onSnapshot: fsMod.onSnapshot,
     query: fsMod.query,
     orderBy: fsMod.orderBy,
+    writeBatch: fsMod.writeBatch,
   };
   return _mods;
 }

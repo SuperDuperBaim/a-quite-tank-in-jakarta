@@ -2221,39 +2221,66 @@ body {
   color: var(--text-muted);
 }
 .catalog-form {
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
   border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .catalog-form-title {
-  font-size: 0.95rem;
-  margin-bottom: var(--space-sm);
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
   color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
 .catalog-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-sm);
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px 16px;
+  align-items: start;
 }
 
-.gift-modal-field-full {
-  grid-column: 1 / -1;
+.catalog-field-id {
+  grid-column: span 2;
+}
+
+.catalog-field-name {
+  grid-column: span 2;
+}
+
+.catalog-field-rarity {
+  grid-column: span 2;
+}
+
+.catalog-field-image {
+  grid-column: span 4;
+}
+
+.catalog-field-scale {
+  grid-column: span 2;
+}
+
+.catalog-field-desc {
+  grid-column: span 6;
 }
 
 .catalog-form-actions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
 }
 
 /* Dropdown gambar + pratinjau berdampingan */
 .catalog-image-row {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 10px;
 }
 
 .catalog-image-row .gift-modal-select {
@@ -2262,14 +2289,26 @@ body {
 }
 
 .catalog-preview {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   flex: none;
   object-fit: contain;
   border-radius: var(--radius-md);
   border: 1.5px solid var(--border);
   background: linear-gradient(180deg, #7FC4C9 0%, #3D7872 100%);
-  padding: 4px;
+  padding: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 860px) {
+  .catalog-field-id,
+  .catalog-field-name,
+  .catalog-field-rarity,
+  .catalog-field-image,
+  .catalog-field-scale,
+  .catalog-field-desc {
+    grid-column: span 6;
+  }
 }
 
 .rarity-badge {
@@ -2664,4 +2703,74 @@ body.photo-mode .weather-badge {
   border-radius: 999px;
   padding: 1px 8px;
   width: fit-content;
+}
+
+/* ========================================
+   FISH DEATH NOTIFICATION MODAL
+   ======================================== */
+.death-dialog {
+  max-width: 380px;
+  text-align: center;
+  padding: 30px 24px 26px;
+  border: 1.5px solid rgba(217, 119, 112, 0.45);
+  box-shadow: 0 18px 48px rgba(74, 44, 40, 0.28);
+}
+
+.death-icon-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: rgba(217, 119, 112, 0.12);
+  border: 1.5px solid rgba(217, 119, 112, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: deathFloat 3s ease-in-out infinite;
+}
+
+.death-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+@keyframes deathFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.04); }
+}
+
+.death-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #5A3A22;
+  margin: 0 0 10px 0;
+}
+
+.death-desc {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-light);
+  margin: 0 0 22px 0;
+}
+
+.death-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-death-gacha {
+  width: 100%;
+  font-size: 0.95rem;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #7FC4C9 0%, #4D8B84 100%);
+  border: none;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(77, 139, 132, 0.35);
+}
+
+.btn-death-gacha:hover {
+  background: linear-gradient(135deg, #8FD4D9 0%, #3D7872 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(77, 139, 132, 0.45);
 }

@@ -180,7 +180,8 @@ import {
    'register-password','register-confirm','register-error','switch-to-register','switch-to-login','bgm',
    'rain-glass-overlay','weather-badge','weather-icon','weather-text',
    'snap-btn','journal-btn','journal-modal','journal-backdrop','journal-close-btn','journal-list',
-   'photo-overlay','photo-img','photo-caption','photo-save-btn','photo-back-btn'
+   'photo-overlay','photo-img','photo-caption','photo-save-btn','photo-back-btn',
+   'death-modal','death-backdrop','death-gacha-btn'
   ].forEach(id => { els[camel(id)] = $(id); });
   function camel(id) { return id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); }
 
@@ -270,8 +271,16 @@ import {
     state.username = saved.username || '';
     state.role = saved.role || 'user';
     const rawList = Array.isArray(r.fishList) ? r.fishList : [];
-    state.fishList = rawList.map(ensureFishEntry).filter(Boolean);
-    state.hunger = r.hunger; state.cleanliness = r.cleanliness;
+    const normalizedList = rawList.map(ensureFishEntry).filter(Boolean);
+    if (r.hunger <= 0 && normalizedList.length > 0) {
+      state.fishList = [];
+      state.hunger = 0;
+      state._pendingDeathNotice = true;
+    } else {
+      state.fishList = normalizedList;
+      state.hunger = r.hunger;
+    }
+    state.cleanliness = r.cleanliness;
     state.foodStock = saved.foodStock ?? FOOD_CONFIG.maxStock;
     state.maxFoodStock = saved.maxFoodStock ?? FOOD_CONFIG.maxStock;
     state.claimedCodes = Array.isArray(saved.claimedCodes) ? saved.claimedCodes : [];
@@ -560,6 +569,27 @@ import {
     if (bgm.paused) bgm.play().catch(() => {});
   }
 
+  /* ---------- FISH DEATH SYSTEM ---------- */
+  function triggerFishDeath() {
+    state.fishList = [];
+    state.hunger = 0;
+    stopSwimLoop();
+    if (els.fishContainer) els.fishContainer.innerHTML = '';
+    swimmers = [];
+    updateStatusBars();
+    persist();
+    closeJournal();
+    closePhotoMode();
+    els.settingsModal?.setAttribute('aria-hidden', 'true');
+    if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function checkFishDeath() {
+    if (state.hunger <= 0 && state.fishList.length > 0) {
+      triggerFishDeath();
+    }
+  }
+
   /* ---------- DECAY + CLAIM ---------- */
   let decayTimer = null, claimTimer = null;
   function tickDecay(deltaMs = 1000) {
@@ -567,6 +597,7 @@ import {
     state.hunger = clamp(state.hunger - BASE_DECAY_RATE.hunger * deltaMs * mult, 0, 100);
     state.cleanliness = clamp(state.cleanliness + REGEN_RATE.cleanliness * deltaMs, 0, 100);
     updateStatusBars(); updateClaimButton(); persistDebounced();
+    checkFishDeath();
   }
   function startDecayInterval() { stopDecayInterval(); decayTimer = setInterval(() => tickDecay(1000), 1000); }
   function stopDecayInterval() { if (decayTimer) clearInterval(decayTimer); decayTimer = null; }
@@ -710,7 +741,15 @@ import {
       }
     }
     playBGM();
-    if (state.fishList.length === 0) showGacha(); else showAquarium();
+    if (state._pendingDeathNotice) {
+      state._pendingDeathNotice = false;
+      showAquarium();
+      triggerFishDeath();
+    } else if (state.fishList.length === 0) {
+      showGacha();
+    } else {
+      showAquarium();
+    }
     return null;
   }
 
@@ -1146,7 +1185,7 @@ import {
     els.settingsCloseBtn?.addEventListener('click', close);
     els.settingsBackdrop?.addEventListener('click', close);
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); }
+      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
     });
 
     els.volumeSlider?.addEventListener('input', () => {
@@ -1326,6 +1365,20 @@ import {
     els.photoBackBtn?.addEventListener('click', closePhotoMode);
     els.photoSaveBtn?.addEventListener('click', savePhoto);
 
+    // Death modal action: reset status fresh & buka gacha
+    els.deathGachaBtn?.addEventListener('click', async () => {
+      if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'true');
+      state.hunger = 100;
+      state.cleanliness = 100;
+      state.foodStock = Math.max(state.foodStock, 5);
+      await persist();
+      showGacha();
+    });
+    els.deathBackdrop?.addEventListener('click', () => {
+      if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'true');
+      showGacha();
+    });
+
     // Audio awal
     const a0 = getAudio();
     if (els.bgm) els.bgm.volume = a0.isMuted ? 0 : clamp(a0.volume, 0, 1);
@@ -1346,6 +1399,12 @@ import {
         if (fb && state.uid) { const d = await loadUserDoc(state.uid); if (d) applySaveToState({ ...d, username: state.username }); }
         else { const l = readLocal(); if (l) applySaveToState(l); }
         updateStatusBars(); startDecayInterval(); startClaimTimer(); startSwimLoop();
+        if (state._pendingDeathNotice) {
+          state._pendingDeathNotice = false;
+          triggerFishDeath();
+        } else {
+          checkFishDeath();
+        }
       }
     });
     window.addEventListener('beforeunload', () => { persist(); });

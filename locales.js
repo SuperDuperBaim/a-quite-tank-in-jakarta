@@ -94,6 +94,9 @@ export const translations = {
       ambient_off: 'Off',
       weather_rain: 'Hujan di Jakarta',
       weather_clear: 'Cerah di Jakarta',
+      fish_death_title: 'Ikan Telah Pergi...',
+      fish_death_desc: 'Ikanmu tidak bertahan karena kelaparan (Hunger mencapai 0%). Jangan lupa untuk selalu memberi makan ikanmu secara teratur ya.',
+      btn_fish_death_gacha: 'Dapatkan Ikan Baru (Gacha)',
   },
   en: {
     app_title: 'A Quite Tank In Jakarta',
@@ -184,6 +187,9 @@ export const translations = {
       ambient_off: 'Off',
       weather_rain: 'Raining in Jakarta',
       weather_clear: 'Clear in Jakarta',
+      fish_death_title: 'Your Fish Has Passed Away...',
+      fish_death_desc: 'Your fish did not make it due to starvation (Hunger reached 0%). Remember to feed your fish regularly.',
+      btn_fish_death_gacha: 'Get a New Fish (Gacha)',
   },
   ja: {
     app_title: 'A Quite Tank In Jakarta',
@@ -274,6 +280,9 @@ export const translations = {
       ambient_off: 'オフ',
       weather_rain: 'ジャカルタは雨',
       weather_clear: 'ジャカルタは晴れ',
+      fish_death_title: 'お別れのとき…',
+      fish_death_desc: 'おなかがすきすぎて（空腹度0%）、魚がお空へ旅立ちました。定期的にお世話をしてあげましょう。',
+      btn_fish_death_gacha: '新しい魚をお迎えする（ガチャ）',
   },
 };
 

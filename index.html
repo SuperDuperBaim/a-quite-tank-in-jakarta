@@ -325,6 +325,25 @@
                 <button id="photo-back-btn" class="btn btn-cozy" type="button">✖ <span data-i18n="photo_back">Back</span></button>
             </div>
         </div>
+
+        <!-- Fish Death Notification Modal -->
+        <div id="death-modal" class="settings-modal death-modal" aria-hidden="true">
+            <div class="settings-backdrop" id="death-backdrop"></div>
+            <div class="settings-dialog death-dialog" role="dialog" aria-labelledby="death-title">
+                <div class="death-icon-wrap">
+                    <span class="death-icon">🫧</span>
+                </div>
+                <h3 id="death-title" class="death-title" data-i18n="fish_death_title">Ikan Telah Pergi...</h3>
+                <p id="death-desc" class="death-desc" data-i18n="fish_death_desc">
+                    Ikanmu tidak bertahan karena kelaparan (Hunger mencapai 0%). Jangan lupa untuk selalu memberi makan ikanmu secara teratur ya.
+                </p>
+                <div class="death-actions">
+                    <button type="button" id="death-gacha-btn" class="btn btn-death-gacha" data-i18n="btn_fish_death_gacha">
+                        🎁 Dapatkan Ikan Baru (Gacha)
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </body>
