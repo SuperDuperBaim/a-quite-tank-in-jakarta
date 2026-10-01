@@ -221,7 +221,8 @@ import {
    'snap-btn','journal-btn','help-btn','journal-modal','journal-backdrop','journal-close-btn','journal-list',
    'photo-overlay','photo-img','photo-caption','photo-save-btn','photo-back-btn',
    'death-modal','death-backdrop','death-gacha-btn',
-   'howto-modal','howto-backdrop','howto-close-btn','howto-play-btn'
+   'howto-modal','howto-backdrop','howto-close-btn','howto-play-btn',
+   'webprofile-modal','webprofile-backdrop','webprofile-close-btn','webprofile-done-btn','webprofile-video','webprofile-open-btn'
   ].forEach(id => { els[camel(id)] = $(id); });
   function camel(id) { return id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); }
 
@@ -492,8 +493,51 @@ import {
   function openHowto() {
     els.howtoModal?.setAttribute('aria-hidden', 'false');
   }
-  function closeHowto() {
+  function closeHowto(triggerVideo = false) {
     els.howtoModal?.setAttribute('aria-hidden', 'true');
+    if (triggerVideo) {
+      setTimeout(openWebprofile, 240);
+    }
+  }
+
+  /* ---------- WEB PROFILE VIDEO (16:9) ---------- */
+  function openWebprofile() {
+    const modal = els.webprofileModal || $('webprofile-modal');
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'false');
+    const vid = els.webprofileVideo || $('webprofile-video');
+    const fallback = $('webprofile-fallback');
+    if (vid) {
+      vid.currentTime = 0;
+      if (els.bgm && !els.bgm.paused) {
+        els.bgm.pause();
+      }
+      const p = vid.play();
+      if (p !== undefined) {
+        p.then(() => {
+          if (fallback) fallback.hidden = true;
+        }).catch((err) => {
+          console.log('Video autoplay note:', err?.message || err);
+          if (vid.error || vid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+            if (fallback) fallback.hidden = false;
+          }
+        });
+      }
+    }
+  }
+
+  function closeWebprofile() {
+    const modal = els.webprofileModal || $('webprofile-modal');
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'true');
+    const vid = els.webprofileVideo || $('webprofile-video');
+    if (vid) {
+      try { vid.pause(); } catch {}
+      try { vid.currentTime = 0; } catch {}
+    }
+    if (state.screen === 'aquarium') {
+      playBGM();
+    }
   }
 
   /* ---------- STATUS BAR + DIRT ---------- */
@@ -773,6 +817,7 @@ import {
     closeJournal();
     closePhotoMode();
     try { closeHowto(); } catch {}
+    try { closeWebprofile(); } catch {}
     els.settingsModal?.setAttribute('aria-hidden', 'true');
     if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'false');
   }
@@ -1421,7 +1466,7 @@ import {
     els.settingsCloseBtn?.addEventListener('click', close);
     els.settingsBackdrop?.addEventListener('click', close);
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); closeHowto(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
+      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); closeHowto(false); closeWebprofile(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
     });
 
     els.volumeSlider?.addEventListener('input', () => {
@@ -1460,7 +1505,7 @@ import {
     els.logoutBtn?.addEventListener('click', async () => {
       try { if (fb) { const { signOut } = await import('./firebase-config.js'); void signOut; await fbSignOut(); } } catch {}
       if (unsubUser) { unsubUser(); unsubUser = null; }
-      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode();
+      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode(); closeWebprofile();
       // Stop BGM on logout
       const bgm = els.bgm;
       if (bgm && !bgm.paused) { bgm.pause(); bgm.currentTime = 0; }
@@ -1604,9 +1649,33 @@ import {
     els.journalCloseBtn?.addEventListener('click', closeJournal);
     els.journalBackdrop?.addEventListener('click', closeJournal);
     els.helpBtn?.addEventListener('click', openHowto);
-    els.howtoCloseBtn?.addEventListener('click', closeHowto);
-    els.howtoBackdrop?.addEventListener('click', closeHowto);
-    els.howtoPlayBtn?.addEventListener('click', closeHowto);
+    els.howtoCloseBtn?.addEventListener('click', () => closeHowto(true));
+    els.howtoBackdrop?.addEventListener('click', () => closeHowto(true));
+    els.howtoPlayBtn?.addEventListener('click', () => closeHowto(true));
+    els.webprofileCloseBtn?.addEventListener('click', closeWebprofile);
+    els.webprofileBackdrop?.addEventListener('click', closeWebprofile);
+    els.webprofileDoneBtn?.addEventListener('click', closeWebprofile);
+    els.webprofileOpenBtn?.addEventListener('click', () => {
+      close();
+      openWebprofile();
+    });
+
+    const webVid = els.webprofileVideo || $('webprofile-video');
+    const webFallback = $('webprofile-fallback');
+    if (webVid) {
+      webVid.addEventListener('play', () => {
+        if (els.bgm && !els.bgm.paused) els.bgm.pause();
+      });
+      webVid.addEventListener('loadeddata', () => {
+        if (webFallback) webFallback.hidden = true;
+      });
+      webVid.addEventListener('canplay', () => {
+        if (webFallback) webFallback.hidden = true;
+      });
+      webVid.addEventListener('error', () => {
+        if (webFallback) webFallback.hidden = false;
+      }, true);
+    }
     els.photoBackBtn?.addEventListener('click', closePhotoMode);
     els.photoSaveBtn?.addEventListener('click', savePhoto);
 

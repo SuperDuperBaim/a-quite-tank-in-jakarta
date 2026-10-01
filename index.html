@@ -198,6 +198,14 @@
                                         </div>
                                         <span class="link-arrow">↗</span>
                                     </a>
+                                    <button type="button" id="webprofile-open-btn" class="creator-link creator-video-link">
+                                        <span class="link-icon">🎬</span>
+                                        <div class="link-text">
+                                            <span class="link-title" data-i18n="webprofile_title">Profil Web</span>
+                                            <span class="link-sub" data-i18n="webprofile_watch_sub">Tonton video profil pengembang</span>
+                                        </div>
+                                        <span class="link-arrow">▶</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -377,6 +385,44 @@
                     </div>
                     <div class="howto-footer">
                         <button type="button" id="howto-play-btn" class="btn btn-howto-play" data-i18n="howto_play_btn">Mengerti, Main! ▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Web Profile Video Modal (16:9) -->
+        <div id="webprofile-modal" class="settings-modal webprofile-modal" aria-hidden="true">
+            <div class="settings-backdrop" id="webprofile-backdrop"></div>
+            <div class="settings-dialog webprofile-dialog" role="dialog" aria-labelledby="webprofile-title">
+                <div class="webprofile-header">
+                    <div class="webprofile-header-badge">🎬</div>
+                    <div class="webprofile-header-text">
+                        <h3 id="webprofile-title" data-i18n="webprofile_title">Profil Web</h3>
+                        <p class="webprofile-header-subtitle" data-i18n="webprofile_subtitle">Video Pengenalan (16:9)</p>
+                    </div>
+                    <button id="webprofile-close-btn" class="settings-close" aria-label="Close web profile">&times;</button>
+                </div>
+                <div class="webprofile-body">
+                    <div class="webprofile-video-container">
+                        <video id="webprofile-video" class="webprofile-video" playsinline controls preload="metadata">
+                            <source src="assets/webprofile.mp4" type="video/mp4">
+                            <source src="assets/webprofile.webm" type="video/webm">
+                            <source src="assets/webprofile.mov" type="video/quicktime">
+                            <source src="assets/intro/webprofile.mp4" type="video/mp4">
+                            Browser Anda tidak mendukung pemutar video.
+                        </video>
+                        <div id="webprofile-fallback" class="webprofile-fallback" hidden>
+                            <span class="webprofile-fallback-icon">🎬</span>
+                            <h4 class="webprofile-fallback-title" data-i18n="webprofile_placeholder_title">Video Profil Belum Ditemukan</h4>
+                            <p class="webprofile-fallback-desc" data-i18n="webprofile_placeholder_desc">
+                                Letakkan file video berformat 16:9 di folder assets/ dengan judul (webprofile.mp4)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="webprofile-footer">
+                        <button type="button" id="webprofile-done-btn" class="btn btn-webprofile-done" data-i18n="webprofile_done_btn">
+                            Lanjut Bermain ▶
+                        </button>
                     </div>
                 </div>
             </div>

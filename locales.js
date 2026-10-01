@@ -120,6 +120,12 @@ export const translations = {
       howto_coin_3: '✨ Kebersihan air ≥ 80%: +1 koin.',
       howto_gacha_note: 'Kumpulkan 10 🪙 untuk Gacha Ikan baru!',
       howto_play_btn: 'Mengerti, Main! ▶',
+      webprofile_title: 'Profil Web',
+      webprofile_subtitle: 'Video Pengenalan (16:9)',
+      webprofile_watch_sub: 'Tonton video profil pengembang',
+      webprofile_done_btn: 'Lanjut Bermain ▶',
+      webprofile_placeholder_title: 'Video Profil Belum Ditemukan',
+      webprofile_placeholder_desc: 'Letakkan file video berformat 16:9 di folder assets/ dengan judul (webprofile.mp4)',
   },
   en: {
     app_title: 'A Quite Tank In Jakarta',
@@ -236,6 +242,12 @@ export const translations = {
       howto_coin_3: '✨ Water cleanliness ≥ 80%: +1 coin.',
       howto_gacha_note: 'Collect 10 🪙 for a new Fish Gacha!',
       howto_play_btn: 'Got it, Play! ▶',
+      webprofile_title: 'Web Profile',
+      webprofile_subtitle: 'Introduction Video (16:9)',
+      webprofile_watch_sub: 'Watch developer profile video',
+      webprofile_done_btn: 'Continue Playing ▶',
+      webprofile_placeholder_title: 'Profile Video Not Found',
+      webprofile_placeholder_desc: 'Place a 16:9 video file into assets/ named webprofile.mp4',
   },
   ja: {
     app_title: 'A Quite Tank In Jakarta',
@@ -352,6 +364,12 @@ export const translations = {
       howto_coin_3: '✨ 水のきれいさ80%以上：+1コイン。',
       howto_gacha_note: '10🪙で新しいガチャが引けるよ！',
       howto_play_btn: 'わかった、遊ぶ！ ▶',
+      webprofile_title: 'ウェブプロフィール',
+      webprofile_subtitle: '紹介動画 (16:9)',
+      webprofile_watch_sub: 'プロフィール動画を見る',
+      webprofile_done_btn: 'ゲームを続ける ▶',
+      webprofile_placeholder_title: '動画ファイルが見つかりません',
+      webprofile_placeholder_desc: 'assets/ フォルダに 16:9 の動画 webprofile.mp4 を配置してください',
   },
 };
 
