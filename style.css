@@ -843,8 +843,8 @@ body {
 /* Settings Button */
 .btn-settings {
   position: absolute;
-  top: 24px;
-  left: 28px;
+  top: clamp(14px, 3vh, 24px);
+  left: clamp(14px, 3vw, 28px);
   z-index: 60;
   width: 44px;
   height: 44px;
@@ -881,7 +881,8 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: clamp(10px, 2.5vh, 20px) 16px;
+  box-sizing: border-box;
 }
 
 .settings-modal[aria-hidden="false"] {
@@ -900,14 +901,19 @@ body {
 .settings-dialog {
   position: relative;
   width: 100%;
-  max-width: 330px;
+  max-width: 360px;
+  max-height: min(86vh, 620px);
+  display: flex;
+  flex-direction: column;
   background: #FFFDF9;
   border-radius: 20px;
   border: 1.5px solid rgba(169, 216, 210, 0.6);
   box-shadow: 0 16px 40px rgba(74, 64, 54, 0.25);
-  padding: 20px 22px;
+  padding: 0;
+  overflow: hidden;
   z-index: 1;
   animation: modalPop 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 @keyframes modalPop {
@@ -919,9 +925,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(169, 216, 210, 0.35);
+  padding: 16px 20px 12px;
+  background: linear-gradient(180deg, rgba(246, 241, 231, 0.92) 0%, rgba(255, 253, 249, 0.98) 100%);
+  border-bottom: 1px solid rgba(169, 216, 210, 0.4);
+  flex-shrink: 0;
 }
 
 .settings-header h3 {
@@ -933,26 +940,45 @@ body {
 }
 
 .settings-close {
-  background: none;
+  background: rgba(74, 64, 54, 0.06);
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   line-height: 1;
   color: var(--text-light);
   cursor: pointer;
-  padding: 2px 8px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 150ms ease;
+  flex-shrink: 0;
+  padding: 0;
 }
 
 .settings-close:hover {
-  color: var(--text);
-  background: rgba(74, 64, 54, 0.08);
+  color: var(--danger);
+  background: rgba(217, 119, 112, 0.15);
+  transform: rotate(90deg);
 }
 
 .settings-body {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(169, 216, 210, 0.6) transparent;
+}
+
+.settings-body::-webkit-scrollbar {
+  width: 5px;
+}
+.settings-body::-webkit-scrollbar-thumb {
+  background: rgba(169, 216, 210, 0.6);
+  border-radius: 4px;
 }
 
 .settings-group {
@@ -1737,8 +1763,8 @@ body {
 
 .drawer-toggle {
   position: absolute;
-  top: 24px;
-  right: 28px;
+  top: clamp(14px, 3vh, 24px);
+  right: clamp(14px, 3vw, 28px);
   z-index: 60;
   width: 44px;
   height: 44px;
@@ -1780,17 +1806,18 @@ body {
 
 .side-drawer {
   position: absolute;
-  top: 80px;
-  right: 28px;
+  top: clamp(68px, 9vh, 80px);
+  right: clamp(14px, 3vw, 28px);
   z-index: 50;
-  width: 260px;
+  width: min(276px, calc(100vw - 28px));
+  max-width: calc(100vw - 28px);
   background: transparent;
   pointer-events: auto;
   transition: transform var(--transition-normal) ease, opacity var(--transition-normal) ease, visibility var(--transition-normal) ease;
 }
 
 .side-drawer.closed {
-  transform: translateX(calc(100% + 28px));
+  transform: translateX(calc(100% + 36px));
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2884,13 +2911,43 @@ body.is-raining .bg-layer {
 }
 .weather-badge[hidden] { display: none; }
 
-/* --- C. Polaroid photo mode --- */
+/* --- C. Polaroid photo mode & Cozy Drawer Controls --- */
 .controls-cozy {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  width: 100% !important;
   margin-top: 2px;
+  box-sizing: border-box;
 }
-.btn-cozy {
-  font-size: 0.82rem;
-  min-height: 38px;
+
+.controls-cozy .btn-cozy {
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 6px 4px !important;
+  gap: 4px !important;
+  font-size: 0.78rem !important;
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+}
+
+.controls-cozy .btn-cozy span[aria-hidden="true"] {
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.controls-cozy .btn-cozy .btn-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 body.photo-mode .side-drawer,
 body.photo-mode .btn-settings,

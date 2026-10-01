@@ -149,7 +149,6 @@ import {
       const lbl = els.gachaRepeatBtn.querySelector('[data-i18n]') || els.gachaRepeatBtn;
       void lbl;
     }
-    refreshAmbientButtons();
     applyWeatherUI();
     renderJournal();
     if (!els.photoOverlay?.hidden && els.photoCaption) {
@@ -199,13 +198,13 @@ import {
   /* ---------- DOM ---------- */
   const $ = (id) => document.getElementById(id);
   const els = {};
-  ['splash-screen','splash-play-btn','intro-screen','intro-video','replay-intro-btn',
+  ['splash-screen','splash-play-btn','intro-screen','intro-video',
    'welcome-screen','gacha-screen','aquarium-screen','gacha-result','gacha-btn','keep-fish-btn','gacha-title',
    'bg-layer','aquarium','dirt-overlay','fish-container','food-particles','hunger-bar','hunger-value',
    'cleanliness-bar','cleanliness-value','food-count','food-stock-fill','claim-food-btn','claim-btn-text',
     'claim-cooldown','feed-btn','coin-value','gacha-repeat-btn','drawer-toggle','side-drawer','settings-btn','settings-modal',
-   'settings-backdrop','settings-close-btn','volume-slider','volume-val','settings-username',
-   'save-username-btn','username-save-msg','redeem-code-input','redeem-code-btn','redeem-msg','logout-btn',
+   'settings-backdrop','settings-close-btn','volume-slider','volume-val','ambient-slider','ambient-val',
+   'redeem-code-input','redeem-code-btn','redeem-msg','logout-btn',
    'login-form','login-username','login-password','login-error','register-form','register-username',
    'register-password','register-confirm','register-error','switch-to-register','switch-to-login','bgm',
    'rain-glass-overlay','weather-badge','weather-icon','weather-text',
@@ -1060,12 +1059,22 @@ import {
   }
 
   /* ---------- COZY B: CUACA JAKARTA + AMBIENT ---------- */
-  const AMBIENT_KEY = 'aquarium_ambient_on';
+  const AMBIENT_VOL_KEY = 'aquarium_ambient_volume';
   let isRainingJakarta = false;
-  const getAmbientPref = () => {
-    try { return localStorage.getItem(AMBIENT_KEY) !== 'off'; } catch { return true; }
+  const getAmbientVolume = () => {
+    try {
+      const v = localStorage.getItem(AMBIENT_VOL_KEY);
+      if (v === null) {
+        const old = localStorage.getItem('aquarium_ambient_on');
+        return old === 'off' ? 0 : 0.5;
+      }
+      const num = parseFloat(v);
+      return Number.isFinite(num) ? clamp(num, 0, 1) : 0.5;
+    } catch { return 0.5; }
   };
-  const setAmbientPref = (on) => { try { localStorage.setItem(AMBIENT_KEY, on ? 'on' : 'off'); } catch {} };
+  const setAmbientVolume = (vol) => {
+    try { localStorage.setItem(AMBIENT_VOL_KEY, String(clamp(vol, 0, 1))); } catch {}
+  };
   const RAIN_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
 
   async function refreshWeather() {
@@ -1113,12 +1122,19 @@ import {
     ambientNodes = null;
   }
   function maybeStartAmbient() {
-    if (state.screen !== 'aquarium' || !getAmbientPref() || !isRainingJakarta) { stopAmbient(); return; }
+    if (state.screen !== 'aquarium' || getAmbientVolume() <= 0 || !isRainingJakarta) { stopAmbient(); return; }
     startAmbient();
   }
   function startAmbient() {
     try {
-      if (ambientNodes) return;
+      const vol = getAmbientVolume();
+      if (vol <= 0) { stopAmbient(); return; }
+      if (ambientNodes) {
+        if (ambientNodes.gain && ambientCtx) {
+          ambientNodes.gain.gain.setValueAtTime(vol * 0.08, ambientCtx.currentTime);
+        }
+        return;
+      }
       ambientCtx = ambientCtx || new (window.AudioContext || window.webkitAudioContext)();
       if (ambientCtx.state === 'suspended') ambientCtx.resume().catch(() => {});
       const len = ambientCtx.sampleRate * 2;
@@ -1133,20 +1149,11 @@ import {
       hp.type = 'highpass'; hp.frequency.value = 300;
       const gain = ambientCtx.createGain();
       gain.gain.value = 0.0;
-      gain.gain.linearRampToValueAtTime(0.05, ambientCtx.currentTime + 2.5);
+      gain.gain.linearRampToValueAtTime(vol * 0.08, ambientCtx.currentTime + 1.5);
       src.connect(lp); lp.connect(hp); hp.connect(gain); gain.connect(ambientCtx.destination);
       src.start();
       ambientNodes = { src, gain };
     } catch {}
-  }
-  function refreshAmbientButtons() {
-    const on = getAmbientPref();
-    document.querySelectorAll('.ambient-btn').forEach(b => {
-      const active = (b.dataset.ambient === 'on') === on;
-      b.classList.toggle('active', active);
-      b.setAttribute('aria-pressed', String(active));
-      b.textContent = b.dataset.ambient === 'on' ? t('ambient_on') : t('ambient_off');
-    });
   }
 
   /* ---------- COZY C: POLAROID PHOTO MODE ---------- */
@@ -1391,11 +1398,12 @@ import {
   function initSettings() {
     const modal = els.settingsModal;
     const open = () => {
-      if (els.settingsUsername) els.settingsUsername.value = state.username || '';
       const a = getAudio();
       if (els.volumeSlider) els.volumeSlider.value = a.isMuted ? 0 : Math.round(a.volume * 100);
       if (els.volumeVal) els.volumeVal.textContent = `${els.volumeSlider?.value || 0}%`;
-      if (els.usernameSaveMsg) els.usernameSaveMsg.hidden = true;
+      const ambVol = Math.round(getAmbientVolume() * 100);
+      if (els.ambientSlider) els.ambientSlider.value = ambVol;
+      if (els.ambientVal) els.ambientVal.textContent = `${ambVol}%`;
       modal?.setAttribute('aria-hidden', 'false');
     };
     const close = () => modal?.setAttribute('aria-hidden', 'true');
@@ -1416,14 +1424,19 @@ import {
       else { bgm.volume = val / 100; if (bgm.paused && (state.screen === 'aquarium' || state.screen === 'gacha')) bgm.play().catch(() => {}); }
     });
 
-    els.saveUsernameBtn?.addEventListener('click', async () => {
-      const v = els.settingsUsername?.value.trim();
-      if (!v) return;
-      state.username = v; await persist();
-      if (els.usernameSaveMsg) {
-        els.usernameSaveMsg.textContent = t('username_updated');
-        els.usernameSaveMsg.hidden = false;
-        setTimeout(() => { els.usernameSaveMsg.hidden = true; }, 2500);
+    els.ambientSlider?.addEventListener('input', () => {
+      const val = parseInt(els.ambientSlider.value, 10);
+      const vol = val / 100;
+      setAmbientVolume(vol);
+      if (els.ambientVal) els.ambientVal.textContent = `${val}%`;
+      if (vol <= 0) {
+        stopAmbient();
+      } else {
+        if (!ambientNodes && isRainingJakarta && state.screen === 'aquarium') {
+          startAmbient();
+        } else if (ambientNodes?.gain && ambientCtx) {
+          ambientNodes.gain.gain.setValueAtTime(vol * 0.08, ambientCtx.currentTime);
+        }
       }
     });
 
@@ -1433,17 +1446,6 @@ import {
 
     els.redeemCodeBtn?.addEventListener('click', handleRedeem);
     els.redeemCodeInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleRedeem(); } });
-
-    els.replayIntroBtn?.addEventListener('click', () => { close(); playIntro(() => showAquarium()); });
-
-    document.querySelectorAll('.ambient-btn').forEach((b) => {
-      b.addEventListener('click', () => {
-        setAmbientPref(b.dataset.ambient === 'on');
-        refreshAmbientButtons();
-        maybeStartAmbient();
-      });
-    });
-    refreshAmbientButtons();
 
     els.logoutBtn?.addEventListener('click', async () => {
       try { if (fb) { const { signOut } = await import('./firebase-config.js'); void signOut; await fbSignOut(); } } catch {}

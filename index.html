@@ -147,23 +147,17 @@
                                 </div>
                             </div>
 
-                            <!-- Ambient Sound Section (PRD Cozy B) -->
+                            <!-- Ambient Sound Section -->
                             <div class="settings-group">
-                                <span class="settings-label" data-i18n="ambient_label">Ambient Sound</span>
-                                <div class="lang-switcher" role="group" aria-label="Ambient">
-                                    <button type="button" class="lang-btn ambient-btn" data-ambient="on">On</button>
-                                    <button type="button" class="lang-btn ambient-btn" data-ambient="off">Off</button>
+                                <label for="ambient-slider" class="settings-label">
+                                    <span data-i18n="ambient_label">Ambient Sound</span>
+                                    <span id="ambient-val">50%</span>
+                                </label>
+                                <div class="volume-control">
+                                    <span class="vol-icon">🌧️</span>
+                                    <input type="range" id="ambient-slider" min="0" max="100" value="50" class="settings-slider">
+                                    <span class="vol-icon">🔊</span>
                                 </div>
-                            </div>
-
-                            <!-- Username Section -->
-                            <div class="settings-group">
-                                <label for="settings-username" class="settings-label" data-i18n="username_label">Username</label>
-                                <div class="username-edit-row">
-                                    <input type="text" id="settings-username" maxlength="20" placeholder="Your name" data-i18n-placeholder="username_ph">
-                                    <button type="button" id="save-username-btn" class="btn-sm" data-i18n="btn_save">Save</button>
-                                </div>
-                                <span id="username-save-msg" class="save-msg" data-i18n="username_updated" hidden>Username updated!</span>
                             </div>
 
                             <!-- Redeem Code Section -->
@@ -174,14 +168,6 @@
                                     <button type="button" id="redeem-code-btn" class="btn-sm" data-i18n="redeem_btn">Redeem</button>
                                 </div>
                                 <span id="redeem-msg" class="save-msg" hidden></span>
-                            </div>
-
-                            <!-- Intro Cinematic Section -->
-                            <div class="settings-group">
-                                <span class="settings-label" data-i18n="cinematic_label">Opening Cinematic</span>
-                                <button type="button" id="replay-intro-btn" class="btn-sm btn-replay-intro">
-                                    🎬 <span data-i18n="cinematic_replay">Replay Intro</span>
-                                </button>
                             </div>
 
                             <!-- Logout Section -->
