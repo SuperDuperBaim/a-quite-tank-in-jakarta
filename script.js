@@ -141,6 +141,14 @@ import {
     try { localStorage.setItem(LANG_STORAGE_KEY, lang); } catch {}
     applyStaticI18n();
     updateClaimButton();
+    updateCoinUI();
+    if (els.gachaTitle) {
+      els.gachaTitle.textContent = gachaMode === 'repeat' ? t('gacha_repeat_title') : t('gacha_title');
+    }
+    if (els.gachaRepeatBtn) {
+      const lbl = els.gachaRepeatBtn.querySelector('[data-i18n]') || els.gachaRepeatBtn;
+      void lbl;
+    }
     refreshAmbientButtons();
     applyWeatherUI();
     renderJournal();
@@ -154,6 +162,8 @@ import {
   }
 
   /* ---------- STATE ---------- */
+  const GACHA_COST = 10;
+  const CLEAN_BONUS_THRESHOLD = 80;
   const state = {
     uid: null, username: '', role: 'user',
     fishList: [], hunger: 100, cleanliness: 100,
@@ -161,7 +171,27 @@ import {
     claimedCodes: [],
     lastFeedTime: 0, lastClaimTime: 0,
     createdAt: 0, lastOnline: 0, screen: 'splash',
+    // Opsi B: koin harian + gacha ulang
+    coins: 0,
+    lastLoginDate: '',
+    dailyFeedCount: 0,
+    lastFeedDate: '',
+    dailyFeedBonusGiven: false,
+    dailyCleanBonusGiven: false,
   };
+  let gachaMode = 'first'; // 'first' | 'repeat'
+  function todayStrWIB() {
+    try {
+      const w = getWIB();
+      const y = w.getFullYear();
+      const m = String(w.getMonth() + 1).padStart(2, '0');
+      const d = String(w.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    } catch {
+      const n = new Date();
+      return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+  }
   let fb = null;             // modul firebase (null = mode lokal)
   let unsubUser = null;      // listener realtime gift fish
   let saveTimer = null;
@@ -170,10 +200,10 @@ import {
   const $ = (id) => document.getElementById(id);
   const els = {};
   ['splash-screen','splash-play-btn','intro-screen','intro-video','replay-intro-btn',
-   'welcome-screen','gacha-screen','aquarium-screen','gacha-result','gacha-btn','keep-fish-btn',
+   'welcome-screen','gacha-screen','aquarium-screen','gacha-result','gacha-btn','keep-fish-btn','gacha-title',
    'bg-layer','aquarium','dirt-overlay','fish-container','food-particles','hunger-bar','hunger-value',
    'cleanliness-bar','cleanliness-value','food-count','food-stock-fill','claim-food-btn','claim-btn-text',
-    'claim-cooldown','feed-btn','drawer-toggle','side-drawer','settings-btn','settings-modal',
+    'claim-cooldown','feed-btn','coin-value','gacha-repeat-btn','drawer-toggle','side-drawer','settings-btn','settings-modal',
    'settings-backdrop','settings-close-btn','volume-slider','volume-val','settings-username',
    'save-username-btn','username-save-msg','redeem-code-input','redeem-code-btn','redeem-msg','logout-btn',
    'login-form','login-username','login-password','login-error','register-form','register-username',
@@ -224,6 +254,12 @@ import {
         claimedCodes: state.claimedCodes,
         lastFeedTime: state.lastFeedTime, lastClaimTime: state.lastClaimTime,
         createdAt: state.createdAt, lastOnline: Date.now(),
+        coins: state.coins || 0,
+        lastLoginDate: state.lastLoginDate || '',
+        dailyFeedCount: state.dailyFeedCount || 0,
+        lastFeedDate: state.lastFeedDate || '',
+        dailyFeedBonusGiven: !!state.dailyFeedBonusGiven,
+        dailyCleanBonusGiven: !!state.dailyCleanBonusGiven,
       }));
     } catch {}
   }
@@ -237,6 +273,12 @@ import {
           hunger: state.hunger, cleanliness: state.cleanliness,
           foodStock: state.foodStock, claimedCodes: state.claimedCodes,
           lastOnline: state.lastOnline,
+          coins: state.coins || 0,
+          lastLoginDate: state.lastLoginDate || '',
+          dailyFeedCount: state.dailyFeedCount || 0,
+          lastFeedDate: state.lastFeedDate || '',
+          dailyFeedBonusGiven: !!state.dailyFeedBonusGiven,
+          dailyCleanBonusGiven: !!state.dailyCleanBonusGiven,
         });
         return;
       } catch (e) { console.warn('Persist cloud gagal:', e); }
@@ -266,6 +308,96 @@ import {
     };
   }
 
+  /* ---------- COINS HARIAN (Opsi B) ---------- */
+  function updateCoinUI() {
+    if (els.coinValue) els.coinValue.textContent = `${state.coins || 0} / ${GACHA_COST}`;
+    const btn = els.gachaRepeatBtn;
+    if (btn) {
+      const ready = (state.coins || 0) >= GACHA_COST;
+      btn.disabled = !ready;
+      btn.classList.toggle('ready', ready);
+      btn.setAttribute('aria-disabled', String(!ready));
+    }
+  }
+  function ensureDailyReset(today) {
+    // Ganti hari: reset counter harian (dipakai saat login maupun feed/clean lintas hari)
+    if (state.lastLoginDate && state.lastLoginDate !== today) {
+      state.dailyFeedCount = 0;
+      state.dailyFeedBonusGiven = false;
+      state.dailyCleanBonusGiven = false;
+    }
+    if (state.lastFeedDate && state.lastFeedDate !== today) {
+      state.dailyFeedCount = 0;
+      state.dailyFeedBonusGiven = false;
+    }
+  }
+  async function checkDailyLoginBonus() {
+    const today = todayStrWIB();
+    ensureDailyReset(today);
+    if ((state.lastLoginDate || '') !== today) {
+      state.coins = (state.coins || 0) + 1;
+      state.lastLoginDate = today;
+      state.dailyFeedCount = 0;
+      state.dailyFeedBonusGiven = false;
+      state.dailyCleanBonusGiven = false;
+      toastCoin(t('coin_login'));
+      await persist();
+    } else if (!state.lastLoginDate) {
+      state.lastLoginDate = today;
+      await persist();
+    }
+    updateCoinUI();
+  }
+  async function handleFeedCoins() {
+    const today = todayStrWIB();
+    ensureDailyReset(today);
+    if (state.lastFeedDate !== today) {
+      state.dailyFeedCount = 0;
+      state.dailyFeedBonusGiven = false;
+      state.lastFeedDate = today;
+    }
+    state.dailyFeedCount = (state.dailyFeedCount || 0) + 1;
+    state.lastFeedDate = today;
+    if (state.dailyFeedCount >= 2 && !state.dailyFeedBonusGiven) {
+      state.dailyFeedBonusGiven = true;
+      state.coins = (state.coins || 0) + 1;
+      toastCoin(t('coin_feed'));
+    }
+    updateCoinUI();
+    await persist();
+  }
+  async function checkCleanBonus() {
+    const today = todayStrWIB();
+    ensureDailyReset(today);
+    if ((state.cleanliness || 0) >= CLEAN_BONUS_THRESHOLD && !state.dailyCleanBonusGiven) {
+      state.dailyCleanBonusGiven = true;
+      state.coins = (state.coins || 0) + 1;
+      toastCoin(t('coin_clean'));
+      updateCoinUI();
+      await persist();
+    } else {
+      updateCoinUI();
+    }
+  }
+  function toastCoin(msg) {
+    try {
+      let el = document.getElementById('coin-toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'coin-toast';
+        el.className = 'coin-toast';
+        el.setAttribute('aria-live', 'polite');
+        document.body.appendChild(el);
+      }
+      el.textContent = `🪙 +1 — ${msg}`;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 2600);
+    } catch {}
+  }
+
   function applySaveToState(saved) {
     const r = applyDeltaDecay(saved);
     state.username = saved.username || '';
@@ -288,6 +420,12 @@ import {
     state.lastClaimTime = saved.lastClaimTime || 0;
     state.createdAt = saved.createdAt || Date.now();
     state.lastOnline = Date.now();
+    state.coins = typeof saved.coins === 'number' ? saved.coins : 0;
+    state.lastLoginDate = saved.lastLoginDate || '';
+    state.dailyFeedCount = saved.dailyFeedCount || 0;
+    state.lastFeedDate = saved.lastFeedDate || '';
+    state.dailyFeedBonusGiven = !!saved.dailyFeedBonusGiven;
+    state.dailyCleanBonusGiven = !!saved.dailyCleanBonusGiven;
   }
 
   /* ---------- VISITOR COUNTER (stats/global) ---------- */
@@ -310,19 +448,30 @@ import {
     if (els.weatherBadge) els.weatherBadge.hidden = name !== 'aquarium';
   }
   function showWelcome() { setScreen('welcome'); }
-  function showGacha() {
+  function showGacha(mode = 'first') {
+    gachaMode = mode;
     setScreen('gacha');
     if (els.gachaResult) els.gachaResult.innerHTML = '<div class="gacha-egg"><img src="assets/ui/egg.png" alt="Fish Egg" class="gacha-egg-img"></div>';
     if (els.gachaBtn) els.gachaBtn.hidden = false;
     if (els.keepFishBtn) els.keepFishBtn.hidden = true;
+    if (els.gachaTitle) {
+      els.gachaTitle.textContent = mode === 'repeat' ? t('gacha_repeat_title') : t('gacha_title');
+    }
+    if (els.gachaBtn) {
+      els.gachaBtn.querySelector('[data-i18n]')?.setAttribute('data-i18n', 'gacha_discover');
+      const label = els.gachaBtn.querySelector('[data-i18n]') || els.gachaBtn;
+      if (label) label.textContent = t('gacha_discover');
+    }
   }
   function showAquarium() {
     setScreen('aquarium');
+    updateCoinUI();
     renderFishList(); updateStatusBars();
     updateBackground(); startSwimLoop(); startDecayInterval(); startClaimTimer(); playBGM();
     initTapInteraction();
     refreshWeather();
     maybeStartAmbient();
+    checkCleanBonus();
   }
 
   /* ---------- STATUS BAR + DIRT ---------- */
@@ -597,6 +746,9 @@ import {
     state.hunger = clamp(state.hunger - BASE_DECAY_RATE.hunger * deltaMs * mult, 0, 100);
     state.cleanliness = clamp(state.cleanliness + REGEN_RATE.cleanliness * deltaMs, 0, 100);
     updateStatusBars(); updateClaimButton(); persistDebounced();
+    if (state.cleanliness >= CLEAN_BONUS_THRESHOLD && !state.dailyCleanBonusGiven) {
+      checkCleanBonus();
+    }
     checkFishDeath();
   }
   function startDecayInterval() { stopDecayInterval(); decayTimer = setInterval(() => tickDecay(1000), 1000); }
@@ -641,6 +793,7 @@ import {
     state.cleanliness = clamp(state.cleanliness - FOOD_CONFIG.feedCleanlinessPenalty, 0, 100);
     state.lastFeedTime = Date.now();
     spawnFood(); updateStatusBars(); persistDebounced();
+    handleFeedCoins();
     // Tukang Makan: bergerak cepat ke arah pakan
     try {
       const box = els.fishContainer;
@@ -713,10 +866,14 @@ import {
     if (fb) {
       let docData = await loadUserDoc(uid);
       if (!docData) {
+        const today = todayStrWIB();
         docData = {
           username, role: 'user', fishList: [], hunger: 100, cleanliness: 100,
           foodStock: FOOD_CONFIG.maxStock, claimedCodes: [],
           createdAt: Date.now(), lastOnline: Date.now(),
+          coins: 0, lastLoginDate: today,
+          dailyFeedCount: 0, lastFeedDate: '',
+          dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
         };
         try { await fb.setDoc(fb.doc(fb.db, 'users', uid), docData); } catch (e) { console.warn(e); }
       }
@@ -724,18 +881,25 @@ import {
       if (docData.role === 'admin') { window.location.href = 'admin.html'; return; }
       applySaveToState({ ...docData, username });
       subscribeUser(uid);
-      await persist();
+      await checkDailyLoginBonus();
+      await checkCleanBonus();
     } else {
       const local = readLocal();
       if (local && local.username.toLowerCase() === username.toLowerCase()) {
         state.uid = null; applySaveToState(local);
+        await checkDailyLoginBonus();
+        await checkCleanBonus();
       } else if (isNew) {
         Object.assign(state, {
           uid: null, role: 'user', fishList: [], hunger: 100, cleanliness: 100,
           foodStock: 5, maxFoodStock: 5, claimedCodes: [],
           lastFeedTime: 0, lastClaimTime: 0, createdAt: Date.now(), lastOnline: Date.now(),
+          coins: 0, lastLoginDate: todayStrWIB(),
+          dailyFeedCount: 0, lastFeedDate: '',
+          dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
         });
         writeLocal();
+        updateCoinUI();
       } else {
         return t('err_user_not_found');
       }
@@ -746,7 +910,7 @@ import {
       showAquarium();
       triggerFishDeath();
     } else if (state.fishList.length === 0) {
-      showGacha();
+      showGacha('first');
     } else {
       showAquarium();
     }
@@ -767,8 +931,26 @@ import {
           renderFishList();
           renderJournal();
         }
+        // Sinkron koin real-time (hindari loop: hanya update jika beda)
+        if (typeof d.coins === 'number' && d.coins !== state.coins) {
+          state.coins = d.coins;
+          updateCoinUI();
+        }
+        if (typeof d.dailyFeedCount === 'number') state.dailyFeedCount = d.dailyFeedCount;
+        if (typeof d.lastFeedDate === 'string') state.lastFeedDate = d.lastFeedDate;
+        if (typeof d.lastLoginDate === 'string') state.lastLoginDate = d.lastLoginDate;
+        if (typeof d.dailyFeedBonusGiven === 'boolean') state.dailyFeedBonusGiven = d.dailyFeedBonusGiven;
+        if (typeof d.dailyCleanBonusGiven === 'boolean') state.dailyCleanBonusGiven = d.dailyCleanBonusGiven;
       });
     } catch {}
+  }
+
+  async function handleGachaRepeat() {
+    if ((state.coins || 0) < GACHA_COST) return;
+    state.coins -= GACHA_COST;
+    updateCoinUI();
+    await persist();
+    showGacha('repeat');
   }
 
   /* ---------- SPLASH + INTRO ---------- */
@@ -1237,7 +1419,11 @@ import {
       Object.assign(state, {
         uid: null, username: '', role: 'user', fishList: [], hunger: 100, cleanliness: 100,
         foodStock: 5, claimedCodes: [], lastFeedTime: 0, lastClaimTime: 0,
+        coins: 0, lastLoginDate: '', dailyFeedCount: 0, lastFeedDate: '',
+        dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
       });
+      gachaMode = 'first';
+      updateCoinUI();
       close();
       switchAuth('login');
       // Clear form fields
@@ -1358,6 +1544,7 @@ import {
 
     els.feedBtn?.addEventListener('click', feedFish);
     els.claimFoodBtn?.addEventListener('click', claimFood);
+    els.gachaRepeatBtn?.addEventListener('click', handleGachaRepeat);
     els.snapBtn?.addEventListener('click', openPhotoMode);
     els.journalBtn?.addEventListener('click', openJournal);
     els.journalCloseBtn?.addEventListener('click', closeJournal);
@@ -1386,6 +1573,7 @@ import {
     // i18n awal: terapkan bahasa tersimpan sebelum splash
     applyStaticI18n();
     updateClaimButton();
+    updateCoinUI();
 
     // Alur: splash (klik tombol mulai) -> intro video -> welcome (login/register)
     showSplash(() => {

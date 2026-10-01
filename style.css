@@ -2386,6 +2386,72 @@ body {
 }
 
 /* ========================================
+   COINS HARIAN + GACHA ULANG (Opsi B)
+   ======================================== */
+.coin-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 253, 249, 0.95);
+  border: 1.5px solid rgba(233, 196, 106, 0.7);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 14px rgba(74, 64, 54, 0.12);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.coin-icon { font-size: 1rem; }
+.coin-label { color: var(--text); }
+.coin-value {
+  color: #8C6212;
+  font-variant-numeric: tabular-nums;
+}
+.btn-gacha {
+  width: 100%;
+  border-color: rgba(233, 196, 106, 0.8);
+}
+.btn-gacha.ready {
+  background: linear-gradient(135deg, #FFE29F 0%, #E9C46A 50%, #D48828 100%);
+  border-color: #8C6212;
+  color: #4A3508;
+  box-shadow: 0 6px 18px rgba(212, 136, 40, 0.4);
+  animation: gachaGlow 2.2s ease-in-out infinite;
+}
+.btn-gacha.ready:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.05);
+}
+@keyframes gachaGlow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(212, 136, 40, 0.35); }
+  50% { box-shadow: 0 6px 22px rgba(212, 136, 40, 0.6); }
+}
+.coin-toast {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  z-index: 6000;
+  background: rgba(255, 253, 249, 0.97);
+  border: 1.5px solid rgba(233, 196, 106, 0.8);
+  color: #4A3508;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(74, 64, 54, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+.coin-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ========================================
    RESPONSIVE - Admin Panel
    ======================================== */
 

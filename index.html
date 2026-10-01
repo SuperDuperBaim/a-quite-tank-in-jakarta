@@ -84,10 +84,10 @@
         <!-- Global Background Audio -->
         <audio id="bgm" src="assets/backsound/Where%20You've%20Begun.mp3" loop preload="auto"></audio>
 
-        <!-- Gacha Screen -->
+        <!-- Gacha Screen (dipakai untuk gacha pertama & gacha ulang 10 koin) -->
         <section id="gacha-screen" class="screen" aria-hidden="true">
             <div class="gacha-content">
-                <h2 data-i18n="gacha_title">Your First Fish</h2>
+                <h2 id="gacha-title" data-i18n="gacha_title">Your First Fish</h2>
                 <div id="gacha-result" class="gacha-result" aria-live="polite">
                     <div class="gacha-egg">
                         <img src="assets/ui/egg.png" alt="Fish Egg" class="gacha-egg-img">
@@ -277,10 +277,23 @@
                             </button>
                         </div>
 
+                        <div class="coin-row" aria-label="Coins" aria-live="polite">
+                            <span class="coin-icon" aria-hidden="true">🪙</span>
+                            <span class="coin-label" data-i18n="label_coins">Koin</span>
+                            <span id="coin-value" class="coin-value">0 / 10</span>
+                        </div>
+
                         <div class="controls">
                             <button id="feed-btn" class="btn btn-feed" aria-label="Feed fish" data-i18n-aria-label="feed_aria" title="Feed (1 food)">
                                 <img src="assets/ui/bottle_tight.png" alt="Bottle" class="btn-icon" aria-hidden="true">
                                 <span class="btn-label" data-i18n="btn_feed">Feed</span>
+                            </button>
+                        </div>
+
+                        <div class="controls">
+                            <button id="gacha-repeat-btn" class="btn btn-gacha" type="button" disabled aria-disabled="true" title="Gacha 10 koin">
+                                <span aria-hidden="true">🎲</span>
+                                <span class="btn-label" data-i18n="btn_gacha_repeat">Gacha Ikan (10 🪙)</span>
                             </button>
                         </div>
 
