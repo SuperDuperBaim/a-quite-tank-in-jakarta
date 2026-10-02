@@ -1586,13 +1586,80 @@ import {
       els.feedbackStatusMsg.textContent = '';
       els.feedbackStatusMsg.className = 'feedback-status-msg';
     }
+    if (els.feedbackSubmitBtn) els.feedbackSubmitBtn.disabled = false;
     updateFeedbackWordCount();
     els.feedbackModal?.setAttribute('aria-hidden', 'false');
     setTimeout(() => els.feedbackText?.focus(), 150);
+    // Cek kuota harian di background agar tombol langsung nonaktif bila sudah 4x.
+    checkFeedbackQuota().catch(() => {});
   }
 
   function closeFeedback() {
     els.feedbackModal?.setAttribute('aria-hidden', 'true');
+  }
+
+  const FEEDBACK_DAILY_LIMIT = 4;
+  function feedbackDayString(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  // Hitung kiriman hari ini dari cadangan localStorage (per username).
+  function countLocalFeedbackToday(username) {
+    try {
+      const arr = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+      if (!Array.isArray(arr)) return 0;
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const t0 = start.getTime();
+      const u = String(username || '').toLowerCase();
+      return arr.filter((x) => String(x.username || '').toLowerCase() === u
+        && Number(x.createdAt || x.clientTimestamp || 0) >= t0).length;
+    } catch { return 0; }
+  }
+  // Hitung kiriman hari ini lintas-device via users/{uid} (user boleh baca dok sendiri).
+  async function countCloudFeedbackToday() {
+    if (!fb?.db || !state.uid) return 0;
+    try {
+      const snap = await fb.getDoc(fb.doc(fb.db, 'users', state.uid));
+      if (!snap.exists()) return 0;
+      const d = snap.data();
+      if (d.feedbackDay === feedbackDayString()) return Number(d.feedbackDayCount) || 0;
+      return 0;
+    } catch { return 0; }
+  }
+  async function bumpCloudFeedbackCount() {
+    if (!fb?.db || !state.uid) return;
+    try {
+      const cur = await countCloudFeedbackToday();
+      await fb.updateDoc(fb.doc(fb.db, 'users', state.uid), {
+        feedbackDay: feedbackDayString(), feedbackDayCount: cur + 1,
+      });
+    } catch (e) { console.warn('bump feedback count gagal:', e); }
+  }
+  function showFeedbackLimit(statusEl, btn, lbl) {
+    if (statusEl) {
+      statusEl.textContent = t('feedback_limit_daily');
+      statusEl.className = 'feedback-status-msg status-error';
+      statusEl.hidden = false;
+    }
+    if (btn) btn.disabled = true;
+    if (lbl) lbl.textContent = t('feedback_submit_text');
+  }
+  // Dipanggil saat modal dibuka: kunci tombol bila kuota habis.
+  async function checkFeedbackQuota() {
+    const username = state.username || 'Player';
+    const statusEl = els.feedbackStatusMsg;
+    const btn = els.feedbackSubmitBtn;
+    const lbl = els.feedbackSubmitLabel;
+    if (countLocalFeedbackToday(username) >= FEEDBACK_DAILY_LIMIT) {
+      showFeedbackLimit(statusEl, btn, lbl);
+      return true;
+    }
+    const cloud = await countCloudFeedbackToday();
+    const effective = Math.max(countLocalFeedbackToday(username), cloud);
+    if (effective >= FEEDBACK_DAILY_LIMIT) {
+      showFeedbackLimit(statusEl, btn, lbl);
+      return true;
+    }
+    return false;
   }
 
   async function handleFeedbackSubmit() {
@@ -1616,9 +1683,24 @@ import {
     }
 
     const username = state.username || 'Player';
+    // Batas harian 4x: cek cepat lokal dulu (hemat read Firestore).
+    if (countLocalFeedbackToday(username) >= FEEDBACK_DAILY_LIMIT) {
+      showFeedbackLimit(statusEl, btn, lbl);
+      return;
+    }
     if (btn) btn.disabled = true;
     if (lbl) lbl.textContent = t('feedback_sending');
     if (statusEl) statusEl.hidden = true;
+
+    // Cek lintas-device via users/{uid} sebelum mengirim.
+    try {
+      const cloud = await countCloudFeedbackToday();
+      const effective = Math.max(countLocalFeedbackToday(username), cloud);
+      if (effective >= FEEDBACK_DAILY_LIMIT) {
+        showFeedbackLimit(statusEl, btn, lbl);
+        return;
+      }
+    } catch {}
 
     try {
       // 1. Kirim ke Firestore bila terkoneksi
@@ -1659,6 +1741,8 @@ import {
         });
         localStorage.setItem('cozy_tank_feedbacks', JSON.stringify(localFeedbacks));
       } catch {}
+      // 3. Catat kuota harian lintas-device
+      await bumpCloudFeedbackCount();
 
       if (statusEl) {
         statusEl.textContent = t('feedback_success');
@@ -1672,7 +1756,10 @@ import {
       setTimeout(() => {
         closeFeedback();
         if (statusEl) statusEl.hidden = true;
-        if (btn) btn.disabled = false;
+        // Jangan aktifkan lagi bila kuota hari ini sudah habis.
+        if (countLocalFeedbackToday(username) >= FEEDBACK_DAILY_LIMIT) {
+          if (btn) btn.disabled = true;
+        } else if (btn) btn.disabled = false;
         if (lbl) lbl.textContent = t('feedback_submit_text');
       }, 1500);
     } catch (err) {

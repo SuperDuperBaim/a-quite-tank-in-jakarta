@@ -139,6 +139,7 @@ export const translations = {
       feedback_sending: 'Mengirim...',
       feedback_empty: 'Silakan ketik kritik dan saran terlebih dahulu.',
       feedback_success: 'Terima kasih atas kritik dan saranmu! ✨',
+      feedback_limit_daily: 'Batas harian tercapai (maks. 4x per hari). Coba lagi besok ya!',
       feedback_close_aria: 'Tutup kritik dan saran',
   },
   en: {
@@ -275,6 +276,7 @@ export const translations = {
       feedback_sending: 'Sending...',
       feedback_empty: 'Please write your feedback first.',
       feedback_success: 'Thank you for your feedback! ✨',
+      feedback_limit_daily: 'Daily limit reached (max 4x per day). Please try again tomorrow!',
       feedback_close_aria: 'Close feedback',
   },
   ja: {
@@ -411,6 +413,7 @@ export const translations = {
       feedback_sending: '送信中...',
       feedback_empty: 'ご意見・ご要望を入力してください。',
       feedback_success: '貴重なご意見ありがとうございます！✨',
+      feedback_limit_daily: '1日の上限に達しました（1日最大4回）。明日またお試しください！',
       feedback_close_aria: 'ご意見フォームをとじる',
   },
 };
