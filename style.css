@@ -3052,13 +3052,6 @@ body {
   box-shadow: 0 2px 6px rgba(79, 142, 138, 0.3);
 }
 
-.creator-video-link {
-  width: 100%;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-}
-
 /* ========================================
    RESPONSIVE - Admin Panel
    ======================================== */

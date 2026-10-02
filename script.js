@@ -225,7 +225,7 @@ import {
    'photo-overlay','photo-img','photo-caption','photo-save-btn','photo-back-btn',
    'death-modal','death-backdrop','death-gacha-btn',
    'howto-modal','howto-backdrop','howto-close-btn','howto-play-btn',
-   'webprofile-modal','webprofile-backdrop','webprofile-close-btn','webprofile-done-btn','webprofile-video','webprofile-open-btn'
+   'webprofile-modal','webprofile-backdrop','webprofile-close-btn','webprofile-done-btn','webprofile-video'
   ].forEach(id => { els[camel(id)] = $(id); });
   function camel(id) { return id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); }
 
@@ -2042,10 +2042,6 @@ import {
     els.webprofileCloseBtn?.addEventListener('click', closeWebprofile);
     els.webprofileBackdrop?.addEventListener('click', closeWebprofile);
     els.webprofileDoneBtn?.addEventListener('click', closeWebprofile);
-    els.webprofileOpenBtn?.addEventListener('click', () => {
-      close();
-      openWebprofile();
-    });
 
     const webVid = els.webprofileVideo || $('webprofile-video');
     const webFallback = $('webprofile-fallback');
