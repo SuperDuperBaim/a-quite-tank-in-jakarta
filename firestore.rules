@@ -46,5 +46,11 @@ service cloud.firestore {
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visitorCount']);
       allow delete: if isAdmin();
     }
+
+    // Masukan pemain (kritik & saran): publik/pemain boleh mengirim (create), admin boleh membaca & menghapus.
+    match /feedbacks/{feedbackId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
   }
 }

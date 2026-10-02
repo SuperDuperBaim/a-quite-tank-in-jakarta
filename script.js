@@ -161,6 +161,7 @@ import {
     }
     applyWeatherUI();
     renderJournal();
+    updateFeedbackWordCount();
     if (!els.photoOverlay?.hidden && els.photoCaption) {
       els.photoCaption.textContent = `${t('photo_caption')} — ${wibStamp()} WIB`;
     }
@@ -214,6 +215,8 @@ import {
    'cleanliness-bar','cleanliness-value','food-count','food-stock-fill','claim-food-btn','claim-btn-text',
     'claim-cooldown','feed-btn','coin-value','gacha-repeat-btn','drawer-toggle','side-drawer','settings-btn','settings-modal',
    'settings-backdrop','settings-close-btn','volume-slider','volume-val','ambient-slider','ambient-val',
+   'feedback-btn','feedback-modal','feedback-backdrop','feedback-close-btn','feedback-username',
+   'feedback-text','feedback-word-count','feedback-limit-warn','feedback-submit-btn','feedback-submit-label','feedback-status-msg',
    'redeem-code-input','redeem-code-btn','redeem-msg','logout-btn',
    'login-form','login-username','login-password','login-error','register-form','register-username',
    'register-password','register-confirm','register-error','switch-to-register','switch-to-login','bgm',
@@ -1466,7 +1469,7 @@ import {
     els.settingsCloseBtn?.addEventListener('click', close);
     els.settingsBackdrop?.addEventListener('click', close);
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { close(); closeJournal(); closePhotoMode(); closeHowto(false); closeWebprofile(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
+      if (e.key === 'Escape') { close(); closeFeedback(); closeJournal(); closePhotoMode(); closeHowto(false); closeWebprofile(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
     });
 
     els.volumeSlider?.addEventListener('input', () => {
@@ -1505,7 +1508,7 @@ import {
     els.logoutBtn?.addEventListener('click', async () => {
       try { if (fb) { const { signOut } = await import('./firebase-config.js'); void signOut; await fbSignOut(); } } catch {}
       if (unsubUser) { unsubUser(); unsubUser = null; }
-      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode(); closeWebprofile();
+      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode(); closeWebprofile(); closeFeedback();
       // Stop BGM on logout
       const bgm = els.bgm;
       if (bgm && !bgm.paused) { bgm.pause(); bgm.currentTime = 0; }
@@ -1537,6 +1540,151 @@ import {
     } catch {}
   }
 
+  /* ---------- MASUKAN (KRITIK & SARAN) ---------- */
+  function getWordList(text) {
+    if (!text) return [];
+    return text.trim().split(/\s+/).filter(Boolean);
+  }
+
+  function updateFeedbackWordCount() {
+    const textarea = els.feedbackText;
+    if (!textarea) return;
+    let words = getWordList(textarea.value);
+    if (words.length > 50) {
+      const regex = /\S+/g;
+      let count = 0;
+      let cutIndex = 0;
+      let match;
+      while ((match = regex.exec(textarea.value)) !== null) {
+        count++;
+        if (count === 50) {
+          cutIndex = match.index + match[0].length;
+          break;
+        }
+      }
+      if (cutIndex > 0) {
+        textarea.value = textarea.value.slice(0, cutIndex);
+        words = getWordList(textarea.value);
+      }
+    }
+    const count = words.length;
+    if (els.feedbackWordCount) {
+      els.feedbackWordCount.innerHTML = `${count} / 50 <span data-i18n="words_unit">${t('words_unit')}</span>`;
+      els.feedbackWordCount.classList.toggle('limit-reached', count >= 50);
+    }
+    if (els.feedbackLimitWarn) {
+      els.feedbackLimitWarn.hidden = count < 50;
+    }
+  }
+
+  function openFeedback() {
+    if (els.feedbackUsername) {
+      els.feedbackUsername.value = state.username || 'Player';
+    }
+    if (els.feedbackStatusMsg) {
+      els.feedbackStatusMsg.hidden = true;
+      els.feedbackStatusMsg.textContent = '';
+      els.feedbackStatusMsg.className = 'feedback-status-msg';
+    }
+    updateFeedbackWordCount();
+    els.feedbackModal?.setAttribute('aria-hidden', 'false');
+    setTimeout(() => els.feedbackText?.focus(), 150);
+  }
+
+  function closeFeedback() {
+    els.feedbackModal?.setAttribute('aria-hidden', 'true');
+  }
+
+  async function handleFeedbackSubmit() {
+    const text = els.feedbackText?.value?.trim() || '';
+    const statusEl = els.feedbackStatusMsg;
+    const btn = els.feedbackSubmitBtn;
+    const lbl = els.feedbackSubmitLabel;
+
+    if (!text) {
+      if (statusEl) {
+        statusEl.textContent = t('feedback_empty');
+        statusEl.className = 'feedback-status-msg status-error';
+        statusEl.hidden = false;
+      }
+      return;
+    }
+
+    const words = getWordList(text);
+    if (words.length > 50) {
+      updateFeedbackWordCount();
+    }
+
+    const username = state.username || 'Player';
+    if (btn) btn.disabled = true;
+    if (lbl) lbl.textContent = t('feedback_sending');
+    if (statusEl) statusEl.hidden = true;
+
+    try {
+      // 1. Kirim ke Firestore bila terkoneksi
+      if (fb && fb.db) {
+        try {
+          await fb.addDoc(fb.collection(fb.db, 'feedbacks'), {
+            username: username,
+            feedback: text,
+            createdAt: fb.serverTimestamp(),
+            lang: currentLang,
+            clientTimestamp: Date.now(),
+          });
+        } catch (e) {
+          console.warn('Firestore feedback submit error:', e);
+        }
+      }
+
+      // 2. Simpan cadangan di localStorage
+      try {
+        const localFeedbacks = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+        localFeedbacks.push({
+          username: username,
+          feedback: text,
+          createdAt: Date.now(),
+          lang: currentLang,
+        });
+        localStorage.setItem('cozy_tank_feedbacks', JSON.stringify(localFeedbacks));
+      } catch {}
+
+      if (statusEl) {
+        statusEl.textContent = t('feedback_success');
+        statusEl.className = 'feedback-status-msg status-success';
+        statusEl.hidden = false;
+      }
+
+      if (els.feedbackText) els.feedbackText.value = '';
+      updateFeedbackWordCount();
+
+      setTimeout(() => {
+        closeFeedback();
+        if (statusEl) statusEl.hidden = true;
+        if (btn) btn.disabled = false;
+        if (lbl) lbl.textContent = t('feedback_submit_text');
+      }, 1500);
+    } catch (err) {
+      if (statusEl) {
+        statusEl.textContent = 'Gagal mengirim masukan. Coba lagi.';
+        statusEl.className = 'feedback-status-msg status-error';
+        statusEl.hidden = false;
+      }
+      if (btn) btn.disabled = false;
+      if (lbl) lbl.textContent = t('feedback_submit_text');
+    }
+  }
+
+  function initFeedback() {
+    els.feedbackBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openFeedback();
+    });
+    els.feedbackCloseBtn?.addEventListener('click', closeFeedback);
+    els.feedbackBackdrop?.addEventListener('click', closeFeedback);
+    els.feedbackText?.addEventListener('input', updateFeedbackWordCount);
+    els.feedbackSubmitBtn?.addEventListener('click', handleFeedbackSubmit);
+  }
+
   /* ---------- DRAWER ---------- */
   function initDrawer() {
     const tg = els.drawerToggle, d = els.sideDrawer;
@@ -1558,7 +1706,7 @@ import {
     // Katalog dinamis: pakai fish_catalog Firestore saat tersedia.
     if (fb) subscribeCatalog(fb, (list) => { applyRemoteCatalog(list); });
     await bumpVisitor();
-    initSettings(); initDrawer();
+    initSettings(); initFeedback(); initDrawer();
 
     // Auth switch
     els.switchToRegister?.addEventListener('click', () => switchAuth('register'));

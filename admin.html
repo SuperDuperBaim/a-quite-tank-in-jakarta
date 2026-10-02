@@ -7,12 +7,65 @@
     <link rel="icon" type="image/jpeg" href="assets/intro/2.jpg">
     <link rel="apple-touch-icon" href="assets/intro/2.jpg">
     <link rel="stylesheet" href="style.css">
+    <script>
+        function switchTab(tabName) {
+            if (!tabName) return;
+            var buttons = document.querySelectorAll('.admin-nav-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                var b = buttons[i];
+                var isActive = (b.getAttribute('data-tab') === tabName);
+                if (isActive) {
+                    b.classList.add('active');
+                    b.setAttribute('aria-selected', 'true');
+                } else {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                }
+            }
+            var pages = document.querySelectorAll('.tab-page');
+            for (var j = 0; j < pages.length; j++) {
+                var p = pages[j];
+                if (p.id === 'tab-page-' + tabName) {
+                    p.style.setProperty('display', 'block', 'important');
+                } else {
+                    p.style.setProperty('display', 'none', 'important');
+                }
+            }
+        }
+        window.switchTab = switchTab;
+
+        // Inisialisasi cepat angka statistik masukan
+        try {
+            var cachedFb = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+            document.addEventListener('DOMContentLoaded', function() {
+                var statEl = document.getElementById('stat-feedbacks');
+                if (statEl) statEl.textContent = Array.isArray(cachedFb) ? cachedFb.length : 0;
+                var badgeEl = document.getElementById('nav-feedback-badge');
+                if (badgeEl && Array.isArray(cachedFb) && cachedFb.length > 0) {
+                    badgeEl.textContent = cachedFb.length;
+                    badgeEl.hidden = false;
+                }
+            });
+        } catch(e) {}
+    </script>
 </head>
 <body class="admin-body">
     <div id="admin-root" style="width:100%;max-width:1200px;margin:0 auto;">
         <header class="admin-topbar">
             <div class="admin-topbar-left">
                 <span class="admin-logo">ADMIN foolstuck</span>
+                <nav class="admin-nav" role="tablist">
+                    <button type="button" class="admin-nav-btn active" data-tab="players" role="tab" aria-selected="true" onclick="switchTab('players')">
+                        👥 Pemain
+                    </button>
+                    <button type="button" class="admin-nav-btn" data-tab="feedbacks" role="tab" aria-selected="false" onclick="switchTab('feedbacks')">
+                        💬 Kritik & Saran
+                        <span id="nav-feedback-badge" class="admin-nav-badge" hidden>0</span>
+                    </button>
+                    <button type="button" class="admin-nav-btn" data-tab="catalog" role="tab" aria-selected="false" onclick="switchTab('catalog')">
+                        🐟 Katalog Ikan
+                    </button>
+                </nav>
             </div>
             <div class="admin-topbar-right">
                 <span id="admin-user" class="admin-user">…</span>
@@ -26,17 +79,22 @@
 
         <div id="admin-content" style="display:none;">
             <section class="admin-stats">
+                <div class="admin-stat-card" data-tab-target="players" style="cursor:pointer;" title="Buka Daftar Pemain" onclick="switchTab('players')">
+                    <div class="admin-stat-label">Total Pemain Terdaftar</div>
+                    <div id="stat-players" class="admin-stat-value">–</div>
+                </div>
+                <div class="admin-stat-card" data-tab-target="feedbacks" style="cursor:pointer;" title="Buka Kritik & Saran" onclick="switchTab('feedbacks')">
+                    <div class="admin-stat-label">Total Kritik & Saran</div>
+                    <div id="stat-feedbacks" class="admin-stat-value">0</div>
+                </div>
                 <div class="admin-stat-card">
                     <div class="admin-stat-label">Total Kunjungan Web</div>
                     <div id="stat-visits" class="admin-stat-value">–</div>
                 </div>
-                <div class="admin-stat-card">
-                    <div class="admin-stat-label">Total Pemain Terdaftar</div>
-                    <div id="stat-players" class="admin-stat-value">–</div>
-                </div>
             </section>
 
-            <section class="admin-section">
+            <!-- Halaman 1: Daftar Pemain -->
+            <section id="tab-page-players" class="admin-section tab-page">
                 <div class="admin-section-header">
                     <h2 class="admin-section-title">Daftar Pemain</h2>
                     <div class="admin-search">
@@ -62,7 +120,36 @@
                 </div>
             </section>
 
-            <section class="admin-section">
+            <!-- Halaman 2: Kritik & Saran Pemain -->
+            <section id="tab-page-feedbacks" class="admin-section tab-page" style="display:none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h2 class="admin-section-title">Kritik & Saran Pemain</h2>
+                        <span id="feedback-count" style="font-size:0.85rem;color:var(--text-muted);">0 masukan</span>
+                    </div>
+                    <div class="admin-search">
+                        <input id="feedback-search" type="text" placeholder="Cari isi / username masukan…" autocomplete="off">
+                    </div>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width:150px;">Username</th>
+                                <th>Kritik & Saran (Maks. 50 kata)</th>
+                                <th style="width:170px;">Waktu Kirim</th>
+                                <th style="width:90px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedback-tbody">
+                            <tr><td colspan="4">Memuat masukan…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Halaman 3: Katalog Ikan -->
+            <section id="tab-page-catalog" class="admin-section tab-page" style="display:none;">
                 <div class="admin-section-header">
                     <h2 class="admin-section-title">Katalog Ikan (fish_catalog)</h2>
                     <button type="button" id="catalog-seed-btn" class="btn-admin btn-admin-secondary" style="font-size:0.8rem;padding:6px 12px;display:none;">📥 Simpan Default ke Firestore</button>
@@ -177,7 +264,7 @@
         </div>
     </div>
 
-    <script type="module" src="admin.js"></script>
+    <script type="module" src="admin.js?v=2.2"></script>
 
     <!-- Konfirmasi styled (pengganti window.confirm) -->
     <div id="confirm-modal" class="gift-modal" aria-hidden="true">

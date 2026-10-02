@@ -19,6 +19,8 @@ let players = [];
 let giftUid = null;
 let giftType = 'fish';
 let editingFishId = null;
+let currentTab = 'players';
+let allFeedbacks = [];
 // ID yang benar-benar ada di Firestore (bukan fallback lokal).
 let remoteIds = new Set();
 // Katalog runtime: isi fish_catalog, fallback default lokal.
@@ -453,10 +455,16 @@ async function deleteFish(fishId, name) {
 
 /* ---------- INIT ---------- */
 async function init() {
-  $('admin-guard-msg').style.display = '';
-  renderGiftOptions();
-  updateCatalogSource();
-  renderCatalog();
+  // Bind dulu agar tombol tetap bisa diklik walau Firebase / guard gagal.
+  try { bindEvents(); } catch (e) { console.warn('bindEvents gagal:', e); }
+  try { switchTab('players'); } catch (e) { console.warn('switchTab gagal:', e); }
+  try {
+    $('admin-guard-msg').style.display = '';
+    renderGiftOptions();
+    updateCatalogSource();
+    renderCatalog();
+  } catch (e) { console.warn('init render gagal:', e); }
+
   fb = await getFirebase();
   if (!fb) {
     $('admin-guard-msg').innerHTML = '<p>Firebase belum dikonfigurasi. Isi <code>firebase-config.js</code> untuk memakai Admin Panel.</p>';
@@ -478,19 +486,38 @@ async function init() {
       window.location.href = 'index.html';
     }
   });
+}
 
-  $('admin-logout').addEventListener('click', async () => {
-    try { await fb.signOut(fb.auth); } catch {}
+function bindEvents() {
+  // Delegasi klik tombol navigasi tab & kartu statistik
+  document.addEventListener('click', (e) => {
+    const navBtn = e.target.closest('.admin-nav-btn[data-tab]');
+    if (navBtn) {
+      e.preventDefault();
+      switchTab(navBtn.getAttribute('data-tab'));
+      return;
+    }
+    const statCard = e.target.closest('.admin-stat-card[data-tab-target]');
+    if (statCard) {
+      e.preventDefault();
+      switchTab(statCard.getAttribute('data-tab-target'));
+      return;
+    }
+  });
+
+  $('admin-logout')?.addEventListener('click', async () => {
+    try { await fb?.signOut(fb?.auth); } catch {}
     window.location.href = 'index.html';
   });
-  $('admin-search').addEventListener('input', (e) => renderTable(e.target.value));
-  $('gift-close').addEventListener('click', closeGift);
-  $('gift-cancel').addEventListener('click', closeGift);
-  $('gift-modal').addEventListener('click', (e) => { if (e.target.id === 'gift-modal') closeGift(); });
-  $('confirm-ok').addEventListener('click', () => closeConfirm(true));
-  $('confirm-cancel').addEventListener('click', () => closeConfirm(false));
-  $('confirm-close').addEventListener('click', () => closeConfirm(false));
-  $('confirm-modal').addEventListener('click', (e) => { if (e.target.id === 'confirm-modal') closeConfirm(false); });
+  $('admin-search')?.addEventListener('input', (e) => renderTable(e.target.value));
+  $('feedback-search')?.addEventListener('input', (e) => renderFeedbacks(filterFeedbacks(e.target.value)));
+  $('gift-close')?.addEventListener('click', closeGift);
+  $('gift-cancel')?.addEventListener('click', closeGift);
+  $('gift-modal')?.addEventListener('click', (e) => { if (e.target.id === 'gift-modal') closeGift(); });
+  $('confirm-ok')?.addEventListener('click', () => closeConfirm(true));
+  $('confirm-cancel')?.addEventListener('click', () => closeConfirm(false));
+  $('confirm-close')?.addEventListener('click', () => closeConfirm(false));
+  $('confirm-modal')?.addEventListener('click', (e) => { if (e.target.id === 'confirm-modal') closeConfirm(false); });
   $('gift-type')?.addEventListener('change', (e) => {
     giftType = e.target.value === 'coin' ? 'coin' : 'fish';
     updateGiftUI();
@@ -501,20 +528,48 @@ async function init() {
       if (input) input.value = String(b.getAttribute('data-coin'));
     });
   });
-  $('gift-send').addEventListener('click', async () => {
+  $('gift-send')?.addEventListener('click', async () => {
     if (!giftUid) return;
     if (giftType === 'coin') { await sendGiftCoin(); return; }
     await sendGiftFish();
   });
-  $('catalog-form').addEventListener('submit', handleCatalogSubmit);
-  $('catalog-cancel-btn').addEventListener('click', cancelEditFish);
+  $('catalog-form')?.addEventListener('submit', handleCatalogSubmit);
+  $('catalog-cancel-btn')?.addEventListener('click', cancelEditFish);
   const seedBtn = $('catalog-seed-btn');
   if (seedBtn) seedBtn.addEventListener('click', seedDefaultCatalog);
   populateImageOptions();
-  $('cf-image').addEventListener('change', updateImagePreview);
-  $('cf-fishId').addEventListener('input', (e) => {
+  $('cf-image')?.addEventListener('change', updateImagePreview);
+  $('cf-fishId')?.addEventListener('input', (e) => {
     const clean = slugifyFishId(e.target.value);
     if (clean !== e.target.value) e.target.value = clean;
+  });
+}
+
+function switchTab(tabName) {
+  if (!tabName) return;
+  currentTab = tabName;
+  document.querySelectorAll('.admin-nav-btn').forEach((btn) => {
+    const active = btn.getAttribute('data-tab') === tabName;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('.tab-page').forEach((sec) => {
+    if (sec.id === `tab-page-${tabName}`) {
+      sec.style.setProperty('display', 'block', 'important');
+    } else {
+      sec.style.setProperty('display', 'none', 'important');
+    }
+  });
+}
+window.switchTab = switchTab;
+
+function filterFeedbacks(q = '') {
+  const query = q.trim().toLowerCase();
+  if (!query) return allFeedbacks;
+  return allFeedbacks.filter((item) => {
+    const u = (item.username || '').toLowerCase();
+    const fbText = (item.feedback || '').toLowerCase();
+    return u.includes(query) || fbText.includes(query);
   });
 }
 
@@ -534,6 +589,131 @@ function watchData() {
     $('stat-players').textContent = players.length;
     renderTable($('admin-search').value || '');
   });
+  watchFeedbacks();
+}
+
+function updateFeedbackCounters(count) {
+  const statFeedbacks = $('stat-feedbacks');
+  if (statFeedbacks) statFeedbacks.textContent = count;
+  const navBadge = $('nav-feedback-badge');
+  if (navBadge) {
+    navBadge.textContent = count;
+    navBadge.hidden = count === 0;
+  }
+}
+
+function renderFeedbacks(feedbacks) {
+  const tb = $('feedback-tbody');
+  const countEl = $('feedback-count');
+  if (countEl) {
+    if (feedbacks.length === allFeedbacks.length) {
+      countEl.textContent = `${allFeedbacks.length} masukan`;
+    } else {
+      countEl.textContent = `${feedbacks.length} dari ${allFeedbacks.length} masukan`;
+    }
+  }
+  if (!tb) return;
+  if (!feedbacks.length) {
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted);">Belum ada kritik atau saran yang masuk.</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  feedbacks.forEach((item) => {
+    const tr = document.createElement('tr');
+    const ts = item.createdAt?.toMillis ? item.createdAt.toMillis() : (item.clientTimestamp || item.createdAt || 0);
+    const dateStr = ts
+      ? fmtDate(ts) + ' ' + new Date(ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      : '–';
+
+    tr.innerHTML =
+      '<td class="username-cell" style="font-weight:700;"></td>' +
+      '<td><div class="feedback-bubble-text"></div></td>' +
+      `<td style="font-size:0.85rem;color:var(--text-muted);">${dateStr}</td>` +
+      '<td></td>';
+    tr.children[0].textContent = item.username || '(Player)';
+    tr.children[1].firstElementChild.textContent = item.feedback || '';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-admin btn-admin-danger action-btn';
+    delBtn.textContent = '🗑️ Hapus';
+    delBtn.title = 'Hapus masukan';
+    delBtn.addEventListener('click', async () => {
+      const ok = await confirmAction({
+        title: 'Hapus Masukan?',
+        message: `Hapus masukan dari "${item.username}"?`,
+        okText: 'Ya, Hapus'
+      });
+      if (!ok) return;
+      try {
+        if (fb && fb.db && !String(item.id).startsWith('local_')) {
+          await fb.deleteDoc(fb.doc(fb.db, 'feedbacks', item.id));
+        }
+        // Hapus juga dari localStorage
+        try {
+          const local = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+          const updated = local.filter((x) => x.feedback !== item.feedback || x.username !== item.username);
+          localStorage.setItem('cozy_tank_feedbacks', JSON.stringify(updated));
+        } catch {}
+        toast('Masukan berhasil dihapus.');
+      } catch (err) {
+        toast('Gagal menghapus masukan.' + firestoreErrHint(err), true);
+      }
+    });
+    tr.children[3].appendChild(delBtn);
+    tb.appendChild(tr);
+  });
+}
+
+function watchFeedbacks() {
+  // 1. Sinkronisasi instan dari local storage
+  try {
+    const local = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+    allFeedbacks = Array.isArray(local) ? local.map((f, idx) => ({ id: f.id || `local_${idx}`, ...f })) : [];
+    updateFeedbackCounters(allFeedbacks.length);
+    renderFeedbacks(filterFeedbacks($('feedback-search')?.value || ''));
+  } catch {
+    allFeedbacks = [];
+    updateFeedbackCounters(0);
+    renderFeedbacks([]);
+  }
+
+  if (!fb || !fb.db) return;
+  try {
+    fb.onSnapshot(fb.collection(fb.db, 'feedbacks'), (qs) => {
+      const list = [];
+      qs.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      // Gabungkan dengan masukan lokal
+      try {
+        const local = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+        local.forEach((lf, idx) => {
+          if (!list.some((rf) => rf.username === lf.username && rf.feedback === lf.feedback)) {
+            list.push({ id: lf.id || `local_${idx}`, ...lf });
+          }
+        });
+      } catch {}
+
+      list.sort((a, b) => {
+        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.clientTimestamp || a.createdAt || 0);
+        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.clientTimestamp || b.createdAt || 0);
+        return tB - tA;
+      });
+      allFeedbacks = list;
+      updateFeedbackCounters(list.length);
+      renderFeedbacks(filterFeedbacks($('feedback-search')?.value || ''));
+    }, (err) => {
+      console.warn('Feedbacks snapshot info:', err);
+      try {
+        const local = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
+        allFeedbacks = Array.isArray(local) ? local : [];
+        updateFeedbackCounters(allFeedbacks.length);
+        renderFeedbacks(filterFeedbacks($('feedback-search')?.value || ''));
+      } catch {}
+    });
+  } catch (e) {
+    console.warn('watchFeedbacks err:', e);
+  }
 }
 
 function watchCatalog() {

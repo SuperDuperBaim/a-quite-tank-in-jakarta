@@ -111,6 +111,11 @@
                     <span id="settings-icon">⚙️</span>
                 </button>
 
+                <!-- Feedback Button (Masukan) -->
+                <button id="feedback-btn" class="btn-settings btn-feedback" aria-label="Kritik dan Saran" data-i18n-aria-label="feedback_btn_aria" title="Masukan" data-i18n-title="feedback_title">
+                    <span id="feedback-icon">💬</span>
+                </button>
+
                 <!-- Collapsible Drawer Toggle -->
                 <button id="drawer-toggle" class="drawer-toggle" aria-label="Toggle panel" aria-expanded="true" title="Close Panel" data-i18n-title="drawer_close">
                     <span class="drawer-toggle-icon">◀</span>
@@ -443,6 +448,49 @@
                     <button type="button" id="death-gacha-btn" class="btn btn-death-gacha" data-i18n="btn_fish_death_gacha">
                         🎁 Dapatkan Ikan Baru (Gacha)
                     </button>
+                </div>
+            </div>
+        </div>
+        <!-- Feedback Modal Dialog (Kritik dan Saran) -->
+        <div id="feedback-modal" class="settings-modal feedback-modal" aria-hidden="true">
+            <div class="settings-backdrop" id="feedback-backdrop"></div>
+            <div class="settings-dialog feedback-dialog" role="dialog" aria-labelledby="feedback-title">
+                <div class="settings-header">
+                    <div class="feedback-header-title">
+                        <span class="feedback-header-icon">💬</span>
+                        <h3 id="feedback-title" data-i18n="feedback_title">Kritik & Saran</h3>
+                    </div>
+                    <button id="feedback-close-btn" class="settings-close" aria-label="Close feedback" data-i18n-aria-label="feedback_close_aria">&times;</button>
+                </div>
+
+                <div class="settings-body feedback-body">
+                    <!-- Username Player (Readonly) -->
+                    <div class="settings-group">
+                        <label class="settings-label" for="feedback-username" data-i18n="feedback_username_label">Username Player</label>
+                        <div class="feedback-input-wrapper">
+                            <input type="text" id="feedback-username" class="feedback-input feedback-readonly" readonly aria-readonly="true" tabindex="-1">
+                            <span class="feedback-lock-icon" title="Username terkunci" aria-hidden="true">🔒</span>
+                        </div>
+                    </div>
+
+                    <!-- Kritik & Saran Textarea (Max 50 kata) -->
+                    <div class="settings-group">
+                        <div class="feedback-label-row">
+                            <label class="settings-label" for="feedback-text" data-i18n="feedback_text_label">Kritik & Saran</label>
+                            <span id="feedback-word-count" class="feedback-word-badge" aria-live="polite">0 / 50 <span data-i18n="words_unit">kata</span></span>
+                        </div>
+                        <textarea id="feedback-text" class="feedback-textarea" rows="4" placeholder="Tulis kritik dan saranmu di sini (maksimal 50 kata)..." data-i18n-placeholder="feedback_placeholder"></textarea>
+                        <span id="feedback-limit-warn" class="feedback-warn" hidden data-i18n="feedback_limit_reached">Maksimal 50 kata tercapai.</span>
+                    </div>
+
+                    <!-- Submit Button & Feedback Status -->
+                    <div class="feedback-action-group">
+                        <button type="button" id="feedback-submit-btn" class="btn btn-feedback-submit">
+                            <span class="feedback-submit-icon">✉️</span>
+                            <span id="feedback-submit-label" data-i18n="feedback_submit_text">Kirim Masukan</span>
+                        </button>
+                        <span id="feedback-status-msg" class="feedback-status-msg" hidden></span>
+                    </div>
                 </div>
             </div>
         </div>
