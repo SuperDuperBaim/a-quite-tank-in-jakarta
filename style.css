@@ -1243,10 +1243,10 @@ body {
   left: 18%;
   top: 36%;
   width: 64%;
-  height: 26.5%;
+  height: 28%;
   z-index: 6;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fish-sprite {
@@ -3113,27 +3113,38 @@ body {
 .fish-nick {
   position: absolute;
   left: 50%;
-  bottom: 100%;
-  transform: translateX(-50%) translateY(-6px);
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
   background: rgba(255, 253, 249, 0.96);
-  border: 1.5px solid rgba(169, 216, 210, 0.7);
+  border: 1.5px solid rgba(169, 216, 210, 0.75);
   border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 0.72rem;
+  padding: 3px 12px;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--text);
   white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(74, 64, 54, 0.15);
+  box-shadow: 0 4px 12px rgba(74, 64, 54, 0.16);
   opacity: 0;
-  animation: nickPop 1.8s ease forwards;
+  animation: nickPop 1.85s ease forwards;
   pointer-events: none;
-  z-index: 20;
+  z-index: 50;
+}
+.fish-nick.flip-bottom {
+  bottom: auto;
+  top: calc(100% + 6px);
+  animation: nickPopBottom 1.85s ease forwards;
 }
 @keyframes nickPop {
   0% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.9); }
-  15% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1); }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.95); }
+}
+@keyframes nickPopBottom {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-4px) scale(0.9); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(2px) scale(1); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(2px) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
 }
 .bubble-heart {
   position: absolute;

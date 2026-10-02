@@ -574,7 +574,7 @@ import {
     const box = els.fishContainer;
     if (!box) return;
     stopSwimLoop(); box.innerHTML = ''; swimmers = [];
-    state.fishList.forEach((f) => {
+    state.fishList.forEach((f, idx) => {
       const def = fishById(f.id); if (!def) return;
       const wrap = document.createElement('div');
       wrap.className = 'fish-wrap'; wrap.dataset.fishId = def.id;
@@ -611,50 +611,140 @@ import {
       // Tap langsung pada ikan (PRD A.2)
       wrap.addEventListener('pointerdown', (e) => { e.stopPropagation(); onFishTap(wrap, f, e); });
       box.appendChild(wrap);
-      const baseSpeed = 0.008 + Math.random() * 0.008;
+
       const fScale = def.scale || 1;
+      const isBig = fScale > 1.8;
+      const isSmall = fScale < 0.95;
+
+      // Unik untuk setiap ikan: variasi kecepatan, gaya renang, preferensi kedalaman
+      let speedFactor = 1.0;
+      if (isBig) speedFactor = 0.52 + Math.random() * 0.22; // Arwana: tenang, megah, meluncur santai
+      else if (isSmall) speedFactor = 1.25 + Math.random() * 0.45; // Ikan kecil: lincah & responsif
+      else speedFactor = 0.85 + Math.random() * 0.35; // Ikan sedang (Koki dll): seimbang
+
+      const trait = f.trait || TRAIT_IDS[idx % TRAIT_IDS.length] || 'playful';
+      let traitSpeedMult = 1.0;
+      if (trait === 'playful') traitSpeedMult = 1.25;
+      if (trait === 'sleepy') traitSpeedMult = 0.72;
+      if (trait === 'skittish') traitSpeedMult = 1.18;
+      if (trait === 'glutton') traitSpeedMult = 1.05;
+
+      const baseSpeed = (0.007 + Math.random() * 0.005) * speedFactor * traitSpeedMult;
+
+      // Wobble unik (fin wag & gelombang berenang alami):
+      const wobbleSpeed = isBig ? (0.0016 + Math.random() * 0.0012) : (0.0035 + Math.random() * 0.0035);
+      const wobbleAmp = isBig ? (1.5 + Math.random() * 1.5) : (2.2 + Math.random() * 2.2);
+      const wobblePhase = Math.random() * Math.PI * 2 + idx * 1.5;
+
+      // Clearance wajar agar ikan tidak terpotong tepi kaca, tapi tetap bisa renang jauh ke bawah
+      const padX = Math.round(48 * fScale + 22);
+      const padY = Math.round(18 * fScale + 10);
+
+      // Preferensi kedalaman:
+      const depthStyles = ['bottom_lover', 'mid_cruiser', 'all_depths', 'bottom_lover'];
+      const depthStyle = trait === 'sleepy' ? 'bottom_lover'
+        : (trait === 'skittish' ? 'bottom_lover'
+        : (trait === 'playful' ? 'all_depths'
+        : depthStyles[idx % depthStyles.length]));
+
+      // Layering z-index berdasarkan ukuran/kedalaman
+      wrap.style.zIndex = Math.round(10 + (1 / fScale) * 10 + (idx % 5));
+
+      // Set initial transform immediately so fish are never stuck at 0,0
+      const initX = (PADDING + Math.random() * 80).toFixed(1);
+      const initY = (PADDING + Math.random() * 50).toFixed(1);
+      wrap.style.transform = `translate(${initX}px, ${initY}px)`;
+
       swimmers.push({
-        el: wrap, img, entry: f, trait: f.trait || 'playful',
+        el: wrap, img, entry: f, trait, depthStyle,
         dir: Math.random() < 0.5 ? 1 : -1,
-        x: PADDING + Math.random() * 60, y: PADDING + Math.random() * 30,
+        x: parseFloat(initX),
+        y: parseFloat(initY),
         tx: 0, ty: 0,
-        speed: f.trait === 'playful' ? baseSpeed * 1.35 : baseSpeed,
-        baseSpeed: f.trait === 'playful' ? baseSpeed * 1.35 : baseSpeed,
-        pause: Math.random() * 120, dashUntil: 0, boostUntil: 0,
-        padX: 70 * fScale + 30, padY: 40 * fScale + 10,
+        speed: baseSpeed,
+        baseSpeed: baseSpeed,
+        wobbleSpeed, wobbleAmp, wobblePhase,
+        pitch: 0,
+        pause: Math.floor(Math.random() * 80),
+        dashUntil: 0, boostUntil: 0,
+        padX, padY, fScale,
       });
     });
-    // sebar posisi awal setelah layout
+
+    // Sebar posisi awal setelah layout ke seluruh area aquarium (atas, tengah, sampai bawah!)
     requestAnimationFrame(() => {
       const r = box.getBoundingClientRect();
-      swimmers.forEach(s => {
-        s.x = PADDING + Math.random() * Math.max(10, r.width - 120);
-        s.y = PADDING + Math.random() * Math.max(10, r.height - 60);
+      swimmers.forEach((s, idx) => {
+        const maxX = Math.max(10, r.width - s.padX);
+        const maxY = Math.max(10, r.height - s.padY);
+        s.x = PADDING + (idx / Math.max(1, swimmers.length)) * maxX * 0.8 + Math.random() * (maxX * 0.2);
+        // Sebarkan kedalaman awal: atas, tengah, bawah secara merata!
+        const initialDepths = [0.65, 0.30, 0.85, 0.45, 0.75, 0.20];
+        const depthRatio = initialDepths[idx % initialDepths.length];
+        s.y = PADDING + depthRatio * maxY;
+        s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px)`;
         pickTarget(s, r);
       });
+      startSwimLoop();
     });
+    startSwimLoop();
   }
 
   function pickTarget(s, rect, prefer = null) {
-    // Clearance mengikuti ukuran sprite agar ikan besar (arwana) tidak
-    // menabrak / terpotong tepi kaca.
-    const padX = s.padX || 100, padY = s.padY || 50;
-    const maxX = Math.max(10, rect.width - padX), maxY = Math.max(10, rect.height - padY);
+    const padX = s.padX || 80, padY = s.padY || 35;
+    const maxX = Math.max(20, rect.width - padX);
+    const maxY = Math.max(20, rect.height - padY);
+
     if (prefer) {
       s.tx = clamp(prefer.x, PADDING, PADDING + maxX);
       s.ty = clamp(prefer.y, PADDING, PADDING + maxY);
-    } else if (s.trait === 'playful') {
-      // Lincah: sering mendekati permukaan
-      s.tx = PADDING + Math.random() * maxX;
-      s.ty = PADDING + Math.random() * maxY * 0.45;
-    } else if (s.trait === 'skittish') {
-      // Penakut: bawah / tengah
-      s.tx = PADDING + Math.random() * maxX;
-      s.ty = PADDING + maxY * 0.45 + Math.random() * maxY * 0.55;
-    } else {
-      s.tx = PADDING + Math.random() * maxX;
-      s.ty = PADDING + Math.random() * maxY;
+      s.dir = s.tx > s.x ? 1 : -1;
+      return;
     }
+
+    // Horizontal target: jelajah lebar kaca
+    s.tx = PADDING + Math.random() * maxX;
+
+    // VERTICAL TARGET:
+    // Pastikan ikan aktif menjelajah ke bawah (bottom & mid layer)
+    const roll = Math.random();
+    let targetZone = 'mid';
+
+    if (s.depthStyle === 'bottom_lover') {
+      // 65% bawah, 25% tengah, 10% atas
+      if (roll < 0.65) targetZone = 'bottom';
+      else if (roll < 0.90) targetZone = 'mid';
+      else targetZone = 'surface';
+    } else if (s.depthStyle === 'mid_cruiser') {
+      // 55% tengah, 35% bawah, 10% atas
+      if (roll < 0.55) targetZone = 'mid';
+      else if (roll < 0.90) targetZone = 'bottom';
+      else targetZone = 'surface';
+    } else {
+      // 'all_depths': penjelajah aktif
+      // Jika saat ini di area atas, dorong 75% untuk berenang ke bawah/tengah!
+      const relY = (s.y - PADDING) / Math.max(1, maxY);
+      if (relY < 0.35) {
+        targetZone = roll < 0.55 ? 'bottom' : (roll < 0.85 ? 'mid' : 'surface');
+      } else if (relY > 0.65) {
+        targetZone = roll < 0.45 ? 'mid' : (roll < 0.75 ? 'surface' : 'bottom');
+      } else {
+        targetZone = roll < 0.45 ? 'bottom' : (roll < 0.80 ? 'mid' : 'surface');
+      }
+    }
+
+    if (targetZone === 'bottom') {
+      // Menyelam dekat dasar (55% - 98% dari kedalaman)
+      s.ty = PADDING + (0.55 + Math.random() * 0.43) * maxY;
+    } else if (targetZone === 'surface') {
+      // Dekat permukaan (5% - 30% dari kedalaman)
+      s.ty = PADDING + (0.05 + Math.random() * 0.25) * maxY;
+    } else {
+      // Lapisan tengah (28% - 62% dari kedalaman)
+      s.ty = PADDING + (0.28 + Math.random() * 0.34) * maxY;
+    }
+
+    s.ty = clamp(s.ty, PADDING, PADDING + maxY);
     s.dir = s.tx > s.x ? 1 : -1;
   }
 
@@ -688,6 +778,7 @@ import {
     void wrap.offsetWidth;
     wrap.classList.add('fish-excited');
     setTimeout(() => wrap.classList.remove('fish-excited'), 650);
+
     // gelembung hati / bintang
     const box = els.fishContainer;
     const s = swimmers.find(sw => sw.el === wrap);
@@ -702,11 +793,21 @@ import {
       box.appendChild(b);
       setTimeout(() => b.remove(), 1700);
     }
-    // label nickname di atas kepala ikan
+
+    // label nickname di atas / bawah kepala ikan
     wrap.querySelectorAll('.fish-nick').forEach(n => n.remove());
     const nick = document.createElement('div');
     nick.className = 'fish-nick';
     nick.textContent = entry.nickname || entry.name;
+
+    // Jika posisi ikan di area atas kaca (y < 45 atau dekat batas atas), posisikan label di bawah ikan agar tidak terpotong!
+    const wrapRect = wrap.getBoundingClientRect();
+    const boxRect = box ? box.getBoundingClientRect() : null;
+    const isNearTop = (s && s.y < 45) || (boxRect && (wrapRect.top - boxRect.top < 38));
+    if (isNearTop) {
+      nick.classList.add('flip-bottom');
+    }
+
     wrap.appendChild(nick);
     setTimeout(() => nick.remove(), 1850);
   }
@@ -751,25 +852,59 @@ import {
     if (!box || !swimmers.length) { swimFrame = null; return; }
     const rect = box.getBoundingClientRect();
     const now = performance.now();
+
     swimmers.forEach(s => {
-      if (s.pause > 0) { s.pause--; return; }
+      // Idle / pause handling:
+      if (s.pause > 0) {
+        s.pause--;
+        const idleWave = Math.sin(now * s.wobbleSpeed + s.wobblePhase) * s.wobbleAmp;
+        s.pitch *= 0.93; // perlahan kembali datar saat santai
+        s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${(s.y + idleWave).toFixed(1)}px)`;
+        const flip = s.dir === -1 ? 'scaleX(-1) ' : '';
+        const rot = s.dir === -1 ? -s.pitch : s.pitch;
+        s.img.style.transform = `${flip}rotate(${rot.toFixed(1)}deg)`;
+        return;
+      }
+
       const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy);
-      if (d < 5) {
-        // Tukang Tidur: sering idle lebih lama
-        const idleChance = s.trait === 'sleepy' ? 0.55 : 0.3;
-        const idleLen = s.trait === 'sleepy' ? 140 + Math.random() * 200 : 60 + Math.random() * 120;
-        if (Math.random() < idleChance) s.pause = idleLen;
+
+      if (d < 6) {
+        // Sampai tujuan: atur durasi santai unik per sifat ikan
+        const isSleepy = s.trait === 'sleepy';
+        const isPlayful = s.trait === 'playful';
+        const pauseChance = isSleepy ? 0.65 : (isPlayful ? 0.20 : 0.38);
+
+        if (Math.random() < pauseChance) {
+          s.pause = isSleepy
+            ? 100 + Math.random() * 160
+            : (isPlayful ? 25 + Math.random() * 50 : 45 + Math.random() * 90);
+        }
         pickTarget(s, rect);
       } else {
         const dashing = now < (s.dashUntil || 0);
         const boosted = now < (s.boostUntil || 0);
-        const k = (dashing ? 3.2 : 1) * (boosted ? 2.2 : 1);
-        s.x += dx * s.speed * k; s.y += dy * s.speed * k;
+        const k = (dashing ? 3.0 : 1) * (boosted ? 2.0 : 1);
+
+        s.x += dx * s.speed * k;
+        s.y += dy * s.speed * k;
         s.dir = dx > 0 ? 1 : -1;
+
+        // Pitch dinamis berdasarkan arah renang naik/turun
+        // Menyelam = moncong condong ke bawah; naik = moncong condong ke atas
+        const targetPitch = clamp(dy * 0.12, -9, 9);
+        s.pitch += (targetPitch - s.pitch) * 0.08;
       }
-      s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px)`;
-      s.img.style.transform = s.dir === -1 ? 'scaleX(-1)' : '';
+
+      // Gelombang renang vertikal alami (sinusoidal):
+      const wave = Math.sin(now * s.wobbleSpeed + s.wobblePhase) * s.wobbleAmp;
+      const curY = s.y + wave;
+
+      s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${curY.toFixed(1)}px)`;
+      const flip = s.dir === -1 ? 'scaleX(-1) ' : '';
+      const rot = s.dir === -1 ? -s.pitch : s.pitch;
+      s.img.style.transform = `${flip}rotate(${rot.toFixed(1)}deg)`;
     });
+
     swimFrame = requestAnimationFrame(swimLoop);
   }
   function startSwimLoop() { if (!swimFrame) swimFrame = requestAnimationFrame(swimLoop); }
@@ -1402,8 +1537,11 @@ import {
           const v = inp.value.trim().slice(0, 20);
           if (v) {
             f.nickname = v;
+            // Update nama langsung pada entri ikan yang sedang berenang tanpa mereset koordinat/animasi
+            const sw = swimmers.find(s => s.entry && (s.entry.instanceId === f.instanceId || s.entry.id === f.id));
+            if (sw && sw.entry) sw.entry.nickname = v;
+            if (sw && sw.img) sw.img.alt = v;
             await persist();
-            renderFishList();
           }
           renderJournal();
         };
@@ -1446,8 +1584,10 @@ import {
     const f = state.fishList.find(x => x.instanceId === instanceId);
     if (!f) return false;
     f.nickname = nickname.trim().slice(0, 20) || f.name;
+    const sw = swimmers.find(s => s.entry && (s.entry.instanceId === instanceId || s.entry.id === f.id));
+    if (sw && sw.entry) sw.entry.nickname = f.nickname;
+    if (sw && sw.img) sw.img.alt = f.nickname;
     await persist();
-    renderFishList();
     renderJournal();
     return true;
   }
