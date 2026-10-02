@@ -704,6 +704,14 @@ function watchFeedbacks() {
       renderFeedbacks(filterFeedbacks($('feedback-search')?.value || ''));
     }, (err) => {
       console.warn('Feedbacks snapshot info:', err);
+      const code = String(err?.code || '');
+      // Kalau read ditolak, jangan diam-diam tampilkan "Belum ada" —
+      // beri tahu admin penyebabnya (umumnya rules belum deploy / bukan admin).
+      if (code.includes('permission-denied')) {
+        const tbErr = $('feedback-tbody');
+        if (tbErr) tbErr.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:#D97770;">Akses ditolak (permission-denied). Deploy <code>firestore.rules</code> dulu dan pastikan login sebagai admin (users/{uid}.role == "admin").</td></tr>';
+        toast('Gagal membaca masukan (akses ditolak — deploy firestore.rules dulu).', true);
+      }
       try {
         const local = JSON.parse(localStorage.getItem('cozy_tank_feedbacks') || '[]');
         allFeedbacks = Array.isArray(local) ? local : [];

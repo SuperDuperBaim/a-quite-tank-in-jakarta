@@ -1625,6 +1625,7 @@ import {
       if (fb && fb.db) {
         try {
           await fb.addDoc(fb.collection(fb.db, 'feedbacks'), {
+            uid: state.uid || null,
             username: username,
             feedback: text,
             createdAt: fb.serverTimestamp(),
@@ -1633,6 +1634,17 @@ import {
           });
         } catch (e) {
           console.warn('Firestore feedback submit error:', e);
+          // Jangan klaim sukses kalau ditolak rules — admin tidak akan pernah melihatnya.
+          if (String(e?.code || '').includes('permission-denied')) {
+            if (statusEl) {
+              statusEl.textContent = 'Gagal mengirim ke server (akses ditolak — deploy firestore.rules dulu).';
+              statusEl.className = 'feedback-status-msg status-error';
+              statusEl.hidden = false;
+            }
+            if (btn) btn.disabled = false;
+            if (lbl) lbl.textContent = t('feedback_submit_text');
+            return;
+          }
         }
       }
 
