@@ -82,15 +82,15 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: #FFFFFF;
+  background-color: var(--bg-cream);
   color: var(--text);
   line-height: 1.5;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 0;
+  align-items: flex-start;
+  padding: var(--space-md);
   overflow-x: hidden;
 }
 
@@ -148,12 +148,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FFFFFF;
+  background-color: #0b0f14;
   overflow: hidden;
   opacity: 1;
   visibility: visible;
-  padding: 16px;
-  box-sizing: border-box;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s ease;
 }
 
@@ -166,21 +164,6 @@ body {
 .splash-screen.fade-out {
   opacity: 0;
   visibility: hidden;
-}
-
-.splash-frame {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  height: min(650px, calc(100dvh - 32px));
-  margin: auto;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #0b0f14;
 }
 
 .splash-bg {
@@ -388,7 +371,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FFFFFF;
+  background-color: #0b0f14;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -405,26 +388,8 @@ body {
   pointer-events: none;
 }
 
-.welcome-frame {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  max-height: calc(100dvh - 32px);
-  margin: auto;
-  border-radius: 24px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #0b0f14;
-}
-
 .welcome-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background-image: url('assets/intro/1.jpg');
   background-size: cover;
@@ -442,8 +407,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin: auto;
   width: 100%;
-  padding: clamp(20px, 4.5vh, 44px) 20px 24px;
+  max-width: 380px;
+  padding: 24px 20px;
   box-sizing: border-box;
 }
 
@@ -4376,17 +4343,14 @@ body.photo-mode .weather-badge {
   }
 
   /* Welcome Screen Login / Register in Short Landscape */
-  .splash-frame,
-  .welcome-frame {
-    max-width: 360px;
-    max-height: calc(100dvh - 16px);
-    border-radius: 18px;
+  .welcome-screen-themed {
+    padding: 8px 12px;
   }
 
   .welcome-themed-content {
     margin: auto;
-    padding: 6px 14px 10px;
-    max-width: 340px;
+    padding: 6px 12px;
+    max-width: 360px;
     width: 100%;
   }
 
@@ -4450,22 +4414,14 @@ body.photo-mode .weather-badge {
    Applied even if inside iframe / embed where orientation isn't detected as landscape
    ======================================== */
 @media (max-height: 520px) {
-  .splash-screen,
   .welcome-screen-themed {
-    padding: 8px;
-  }
-
-  .splash-frame,
-  .welcome-frame {
-    max-width: 360px;
-    max-height: calc(100dvh - 16px);
-    border-radius: 18px;
+    padding: 8px 12px;
   }
 
   .welcome-themed-content {
     margin: auto;
-    padding: 6px 14px 10px;
-    max-width: 340px;
+    padding: 6px 12px;
+    max-width: 360px;
     width: 100%;
   }
 
