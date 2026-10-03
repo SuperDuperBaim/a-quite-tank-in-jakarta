@@ -84,6 +84,19 @@ import {
     NIGHT:     { start: 18.5, end: 29,label: 'Night',     bg: 'assets/background/night.png' },
   };
 
+  /* ---------- TOKO: KATALOG AKUARIUM ----------
+     Menjual desain akuarium kaca (aquarium.png, aquarium-side-plant.png, aquarium-full-plant.png).
+     Dimensi dan rasio pixel (1452 x 1083) 100% presisi dengan akuarium bawaan. */
+  const AQUARIUM_CATALOG = [
+    { id: 'tank_default', price: 0, image: 'assets/aquarium/aquarium.png?v=2.3', preview: 'assets/aquarium/aquarium.png?v=2.3',
+      nameKey: 'tank_default_name', descKey: 'tank_default_desc' },
+    { id: 'tank_side_plant', price: 100, image: 'assets/aquarium/aquarium-side-plant.png?v=2.3', preview: 'assets/aquarium/aquarium-side-plant.png?v=2.3',
+      nameKey: 'tank_side_plant_name', descKey: 'tank_side_plant_desc' },
+    { id: 'tank_full_plant', price: 100, image: 'assets/aquarium/aquarium-full-plant.png?v=2.3', preview: 'assets/aquarium/aquarium-full-plant.png?v=2.3',
+      nameKey: 'tank_full_plant_name', descKey: 'tank_full_plant_desc' },
+  ];
+  const tankDef = (id) => AQUARIUM_CATALOG.find((tk) => tk.id === id) || AQUARIUM_CATALOG[0];
+
   // Hunger: -1% per 3,6 mnt. Cleanliness: +1% per 10 mnt (revisi 1.md §2E).
   const BASE_DECAY_RATE = { hunger: 1 / (3.6 * 60 * 1000) };
   const REGEN_RATE = { cleanliness: 1 / (10 * 60 * 1000) };
@@ -161,6 +174,7 @@ import {
     }
     applyWeatherUI();
     renderJournal();
+    renderShopAquariums();
     updateFeedbackWordCount();
     if (!els.photoOverlay?.hidden && els.photoCaption) {
       els.photoCaption.textContent = `${t('photo_caption')} — ${wibStamp()} WIB`;
@@ -183,6 +197,9 @@ import {
     createdAt: 0, lastOnline: 0, screen: 'splash',
     // Opsi B: koin harian + gacha ulang
     coins: 0,
+    // Toko: desain akuarium
+    unlockedTanks: ['tank_default'],
+    activeTank: 'tank_default',
     lastLoginDate: '',
     dailyFeedCount: 0,
     lastFeedDate: '',
@@ -209,14 +226,16 @@ import {
   /* ---------- DOM ---------- */
   const $ = (id) => document.getElementById(id);
   const els = {};
-  ['splash-screen','splash-play-btn','intro-screen','intro-video',
+  ['splash-screen','splash-play-btn','intro-screen','intro-video','intro-skip-btn',
    'welcome-screen','gacha-screen','aquarium-screen','gacha-result','gacha-btn','keep-fish-btn','gacha-title',
-   'bg-layer','aquarium','dirt-overlay','fish-container','food-particles','hunger-bar','hunger-value',
+   'bg-layer','aquarium','aquarium-bg','dirt-overlay','fish-container','food-particles','hunger-bar','hunger-value',
    'cleanliness-bar','cleanliness-value','food-count','food-stock-fill','claim-food-btn','claim-btn-text',
     'claim-cooldown','feed-btn','coin-value','gacha-repeat-btn','drawer-toggle','side-drawer','settings-btn','settings-modal',
    'settings-backdrop','settings-close-btn','volume-slider','volume-val','ambient-slider','ambient-val',
    'feedback-btn','feedback-modal','feedback-backdrop','feedback-close-btn','feedback-username',
    'feedback-text','feedback-word-count','feedback-limit-warn','feedback-submit-btn','feedback-submit-label','feedback-status-msg',
+   'shop-btn','shop-modal','shop-backdrop','shop-close-btn','shop-coin-value',
+   'shop-tab-themes','shop-theme-grid','shop-status-msg',
    'redeem-code-input','redeem-code-btn','redeem-msg','logout-btn',
    'login-form','login-username','login-password','login-error','register-form','register-username',
    'register-password','register-confirm','register-error','switch-to-register','switch-to-login','bgm',
@@ -269,6 +288,8 @@ import {
         lastFeedTime: state.lastFeedTime, lastClaimTime: state.lastClaimTime,
         createdAt: state.createdAt, lastOnline: Date.now(),
         coins: state.coins || 0,
+        unlockedTanks: Array.isArray(state.unlockedTanks) ? state.unlockedTanks : ['tank_default'],
+        activeTank: state.activeTank || 'tank_default',
         lastLoginDate: state.lastLoginDate || '',
         dailyFeedCount: state.dailyFeedCount || 0,
         lastFeedDate: state.lastFeedDate || '',
@@ -288,6 +309,8 @@ import {
           foodStock: state.foodStock, claimedCodes: state.claimedCodes,
           lastOnline: state.lastOnline,
           coins: state.coins || 0,
+          unlockedTanks: Array.isArray(state.unlockedTanks) ? state.unlockedTanks : ['tank_default'],
+          activeTank: state.activeTank || 'tank_default',
           lastLoginDate: state.lastLoginDate || '',
           dailyFeedCount: state.dailyFeedCount || 0,
           lastFeedDate: state.lastFeedDate || '',
@@ -325,6 +348,7 @@ import {
   /* ---------- COINS HARIAN (Opsi B) ---------- */
   function updateCoinUI() {
     if (els.coinValue) els.coinValue.textContent = `${state.coins || 0} / ${GACHA_COST}`;
+    updateShopCoin();
     const btn = els.gachaRepeatBtn;
     if (btn) {
       const ready = (state.coins || 0) >= GACHA_COST;
@@ -435,6 +459,13 @@ import {
     state.createdAt = saved.createdAt || Date.now();
     state.lastOnline = Date.now();
     state.coins = typeof saved.coins === 'number' ? saved.coins : 0;
+    // Toko: validasi akuarium dari katalog agar data lama/rusak tetap aman.
+    const savedUnlocked = Array.isArray(saved.unlockedTanks)
+      ? saved.unlockedTanks.filter((id) => AQUARIUM_CATALOG.some((tk) => tk.id === id)) : [];
+    if (!savedUnlocked.includes('tank_default')) savedUnlocked.unshift('tank_default');
+    state.unlockedTanks = savedUnlocked;
+    state.activeTank = AQUARIUM_CATALOG.some((tk) => tk.id === saved.activeTank) ? saved.activeTank : 'tank_default';
+    if (!state.unlockedTanks.includes(state.activeTank)) state.activeTank = 'tank_default';
     state.lastLoginDate = saved.lastLoginDate || '';
     state.dailyFeedCount = saved.dailyFeedCount || 0;
     state.lastFeedDate = saved.lastFeedDate || '';
@@ -481,7 +512,7 @@ import {
     setScreen('aquarium');
     updateCoinUI();
     renderFishList(); updateStatusBars();
-    updateBackground(); startSwimLoop(); startDecayInterval(); startClaimTimer(); playBGM();
+    updateBackground(); updateAquariumSkin(); startSwimLoop(); startDecayInterval(); startClaimTimer(); playBGM();
     initTapInteraction();
     refreshWeather();
     maybeStartAmbient();
@@ -510,8 +541,12 @@ import {
     modal.setAttribute('aria-hidden', 'false');
     const vid = els.webprofileVideo || $('webprofile-video');
     const fallback = $('webprofile-fallback');
+    if (fallback) {
+      if (vid && (vid.readyState > 0 || vid.currentTime > 0 || vid.videoWidth > 0)) {
+        fallback.hidden = true;
+      }
+    }
     if (vid) {
-      vid.currentTime = 0;
       if (els.bgm && !els.bgm.paused) {
         els.bgm.pause();
       }
@@ -521,8 +556,8 @@ import {
           if (fallback) fallback.hidden = true;
         }).catch((err) => {
           console.log('Video autoplay note:', err?.message || err);
-          if (vid.error || vid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
-            if (fallback) fallback.hidden = false;
+          if (fallback && vid.error && vid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE && vid.readyState === 0) {
+            fallback.hidden = false;
           }
         });
       }
@@ -568,6 +603,9 @@ import {
   function preload() {
     FISH_DEFS.forEach(f => { const a = new Image(); a.src = f.src; const b = new Image(); b.src = f.originalSrc; });
     Object.values(TIME_PERIODS).forEach(p => { const i = new Image(); i.src = p.bg; });
+    AQUARIUM_CATALOG.forEach(tk => { const im = new Image(); im.src = tk.image; });
+    const rImg = new Image(); rImg.src = 'assets/background/rain_light.jpg';
+    const rNightImg = new Image(); rNightImg.src = 'assets/background/rain-night.jpg';
   }
 
   function renderFishList() {
@@ -607,7 +645,10 @@ import {
           img.style.opacity = '0';
         }
       };
-      wrap.appendChild(img);
+      const body = document.createElement('div');
+      body.className = 'fish-body';
+      body.appendChild(img);
+      wrap.appendChild(body);
       // Tap langsung pada ikan (PRD A.2)
       wrap.addEventListener('pointerdown', (e) => { e.stopPropagation(); onFishTap(wrap, f, e); });
       box.appendChild(wrap);
@@ -922,9 +963,33 @@ import {
     return TIME_PERIODS.NIGHT;
   }
   function updateBackground() {
-    if (els.bgLayer) els.bgLayer.style.backgroundImage = `url('${currentPeriod().bg}')`;
+    if (!els.bgLayer) return;
+    const isNight = currentPeriod() === TIME_PERIODS.NIGHT;
+    document.body.classList.toggle('is-night', isNight);
+    let bgUrl = currentPeriod().bg;
+    if (isRainingJakarta) {
+      bgUrl = isNight ? 'assets/background/rain-night.jpg' : 'assets/background/rain_light.jpg';
+    }
+    els.bgLayer.style.setProperty('background-image', `url('${bgUrl}')`, 'important');
   }
   setInterval(updateBackground, 60000);
+
+  /* ---------- AKUARIUM TANK GRAPHIC ---------- */
+  function updateAquariumSkin() {
+    const el = els.aquariumBg || $('aquarium-bg');
+    if (!el) return;
+    const def = tankDef(state.activeTank);
+    el.style.backgroundImage = `url('${def.image}')`;
+  }
+  function applyTankSkinSmooth() {
+    const el = els.aquariumBg || $('aquarium-bg');
+    if (!el) { updateAquariumSkin(); return; }
+    el.style.opacity = '0.35';
+    setTimeout(() => {
+      updateAquariumSkin();
+      el.style.opacity = '1';
+    }, 200);
+  }
 
   /* ---------- BGM ---------- */
   const AUDIO_KEY = 'aquarium_audio_settings';
@@ -1099,6 +1164,7 @@ import {
           foodStock: FOOD_CONFIG.maxStock, claimedCodes: [],
           createdAt: Date.now(), lastOnline: Date.now(),
           coins: 0, lastLoginDate: today,
+          unlockedTanks: ['tank_default'], activeTank: 'tank_default',
           dailyFeedCount: 0, lastFeedDate: '',
           dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
         };
@@ -1122,6 +1188,7 @@ import {
           foodStock: 5, maxFoodStock: 5, claimedCodes: [],
           lastFeedTime: 0, lastClaimTime: 0, createdAt: Date.now(), lastOnline: Date.now(),
           coins: 0, lastLoginDate: todayStrWIB(),
+          unlockedTanks: ['tank_default'], activeTank: 'tank_default',
           dailyFeedCount: 0, lastFeedDate: '',
           dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
         });
@@ -1164,6 +1231,22 @@ import {
           state.coins = d.coins;
           updateCoinUI();
         }
+        // Sinkron akuarium toko real-time
+        if (Array.isArray(d.unlockedTanks)) {
+          const valid = d.unlockedTanks.filter((id) => AQUARIUM_CATALOG.some((tk) => tk.id === id));
+          if (!valid.includes('tank_default')) valid.unshift('tank_default');
+          if (valid.join(',') !== (state.unlockedTanks || []).join(',')) {
+            state.unlockedTanks = valid;
+            renderShopAquariums();
+          }
+        }
+        if (typeof d.activeTank === 'string' && AQUARIUM_CATALOG.some((tk) => tk.id === d.activeTank)
+            && d.activeTank !== state.activeTank
+            && (state.unlockedTanks || []).includes(d.activeTank)) {
+          state.activeTank = d.activeTank;
+          applyTankSkinSmooth();
+          renderShopAquariums();
+        }
         if (typeof d.dailyFeedCount === 'number') state.dailyFeedCount = d.dailyFeedCount;
         if (typeof d.lastFeedDate === 'string') state.lastFeedDate = d.lastFeedDate;
         if (typeof d.lastLoginDate === 'string') state.lastLoginDate = d.lastLoginDate;
@@ -1182,20 +1265,33 @@ import {
   }
 
   /* ---------- SPLASH + INTRO ---------- */
+  // Ikat tombol Start seawal mungkin (dipanggil paling atas init) agar klik
+  // tidak pernah mati walau ada error di langkah init berikutnya.
+  // Satu-satunya listener klik; callback default = putar intro lalu welcome.
+  let splashOnPlay = null;
+  function bindSplashButton(onPlay) {
+    if (typeof onPlay === 'function') splashOnPlay = onPlay;
+    const btn = $('splash-play-btn');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        if (splashOnPlay) splashOnPlay();
+        else playIntro(() => showWelcome());
+      } catch (err) { console.warn('Start gagal, langsung ke welcome:', err); showWelcome(); }
+    });
+    try { window.__aqSplashReady = true; } catch {}
+  }
   function showSplash(onPlay) {
-    const splash = $('splash-screen'), btn = $('splash-play-btn');
+    try { window.__aqSplashReady = true; } catch {}
+    const splash = $('splash-screen');
     if (!splash) { onPlay?.(); return; }
     setScreen('splash');
     splash.classList.remove('fade-out');
     splash.setAttribute('aria-hidden', 'false');
-
-    if (btn) {
-      btn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onPlay?.();
-      };
-    }
+    bindSplashButton(onPlay);
   }
 
   function playIntro(onComplete) {
@@ -1225,6 +1321,7 @@ import {
     const finish = () => {
       if (done) return;
       done = true;
+      clearTimeout(stallTimer);
       try { localStorage.setItem('cozy_tank_intro_seen', 'true'); } catch {}
       try { video.pause(); } catch {}
       screen.classList.add('fade-out');
@@ -1236,6 +1333,27 @@ import {
     };
 
     video.onended = finish;
+    video.onerror = finish;
+
+    // Pengaman: kalau video macet (file lambat/rusak) jangan diam di layar
+    // hitam — lewati intro setelah 6 detik tanpa progres.
+    const stallTimer = setTimeout(() => {
+      if (!done && video.readyState < 2) {
+        console.warn('Intro stall (readyState ' + video.readyState + '), lewati.');
+        finish();
+      }
+    }, 6000);
+
+    // Lewati video dengan tombol Lewati atau klik layar
+    const skipBtn = els.introSkipBtn || $('intro-skip-btn');
+    if (skipBtn) {
+      skipBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        finish();
+      };
+    }
+    screen.onclick = () => finish();
 
     // Putar video langsung di dalam user gesture loop
     const p = video.play();
@@ -1298,6 +1416,7 @@ import {
     const ov = els.rainGlassOverlay;
     if (ov) ov.hidden = !isRainingJakarta;
     document.body.classList.toggle('is-raining', !!isRainingJakarta);
+    updateBackground();
     if (els.weatherBadge) {
       els.weatherBadge.hidden = state.screen !== 'aquarium';
       if (els.weatherIcon) els.weatherIcon.textContent = isRainingJakarta ? '🌧️' : '🌤️';
@@ -1393,7 +1512,7 @@ import {
     if (bg) coverDraw(ctx, bg, 0, 0, W, PH);
     else { ctx.fillStyle = '#A9D8D2'; ctx.fillRect(0, 0, W, PH); }
     // bingkai tank (cover, seperti CSS)
-    const tank = await loadImg('assets/aquarium/aquarium.png');
+    const tank = await loadImg(tankDef(state.activeTank).image || 'assets/aquarium/aquarium.png');
     if (tank) coverDraw(ctx, tank, 0, 0, W, PH);
     // ikan: ukuran & posisi persis seperti di layar
     for (const s of swimmers) {
@@ -1609,7 +1728,7 @@ import {
     els.settingsCloseBtn?.addEventListener('click', close);
     els.settingsBackdrop?.addEventListener('click', close);
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { close(); closeFeedback(); closeJournal(); closePhotoMode(); closeHowto(false); closeWebprofile(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
+      if (e.key === 'Escape') { close(); closeFeedback(); closeShop(); closeJournal(); closePhotoMode(); closeHowto(false); closeWebprofile(); els.deathModal?.setAttribute('aria-hidden', 'true'); }
     });
 
     els.volumeSlider?.addEventListener('input', () => {
@@ -1648,7 +1767,7 @@ import {
     els.logoutBtn?.addEventListener('click', async () => {
       try { if (fb) { const { signOut } = await import('./firebase-config.js'); void signOut; await fbSignOut(); } } catch {}
       if (unsubUser) { unsubUser(); unsubUser = null; }
-      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode(); closeWebprofile(); closeFeedback();
+      stopDecayInterval(); stopClaimTimer(); stopSwimLoop(); stopAmbient(); closePhotoMode(); closeWebprofile(); closeFeedback(); closeShop();
       // Stop BGM on logout
       const bgm = els.bgm;
       if (bgm && !bgm.paused) { bgm.pause(); bgm.currentTime = 0; }
@@ -1656,6 +1775,7 @@ import {
         uid: null, username: '', role: 'user', fishList: [], hunger: 100, cleanliness: 100,
         foodStock: 5, claimedCodes: [], lastFeedTime: 0, lastClaimTime: 0,
         coins: 0, lastLoginDate: '', dailyFeedCount: 0, lastFeedDate: '',
+        unlockedTanks: ['tank_default'], activeTank: 'tank_default',
         dailyFeedBonusGiven: false, dailyCleanBonusGiven: false,
       });
       gachaMode = 'first';
@@ -1924,6 +2044,109 @@ import {
     els.feedbackSubmitBtn?.addEventListener('click', handleFeedbackSubmit);
   }
 
+  /* ---------- TOKO: DESAIN AKUARIUM ---------- */
+  function updateShopCoin() {
+    if (els.shopCoinValue) els.shopCoinValue.textContent = `🪙 ${state.coins || 0}`;
+  }
+  function shopMsg(msg, ok = true) {
+    const el = els.shopStatusMsg;
+    if (!el) return;
+    el.textContent = msg;
+    el.hidden = !msg;
+    el.className = 'shop-status-msg ' + (ok ? 'status-success' : 'status-error');
+    clearTimeout(el._t);
+    if (msg) el._t = setTimeout(() => { el.hidden = true; }, 3000);
+  }
+  function openShop() {
+    updateShopCoin();
+    renderShopAquariums();
+    if (els.shopStatusMsg) els.shopStatusMsg.hidden = true;
+    els.shopModal?.setAttribute('aria-hidden', 'false');
+  }
+  function closeShop() {
+    els.shopModal?.setAttribute('aria-hidden', 'true');
+  }
+  function renderShopAquariums() {
+    const grid = els.shopThemeGrid;
+    if (!grid) return;
+    grid.innerHTML = '';
+    const unlocked = Array.isArray(state.unlockedTanks) ? state.unlockedTanks : ['tank_default'];
+    AQUARIUM_CATALOG.forEach((tk) => {
+      const owned = unlocked.includes(tk.id);
+      const equipped = state.activeTank === tk.id;
+      const card = document.createElement('div');
+      card.className = 'shop-card' + (equipped ? ' equipped' : '');
+      const img = document.createElement('img');
+      img.className = 'shop-preview';
+      img.src = tk.preview;
+      img.alt = t(tk.nameKey);
+      img.loading = 'lazy';
+      img.onerror = () => { img.src = 'assets/aquarium/aquarium.png'; };
+      const name = document.createElement('h4');
+      name.className = 'shop-card-name';
+      name.textContent = t(tk.nameKey);
+      const desc = document.createElement('p');
+      desc.className = 'shop-card-desc';
+      desc.textContent = t(tk.descKey);
+      const foot = document.createElement('div');
+      foot.className = 'shop-card-foot';
+      const price = document.createElement('span');
+      price.className = 'shop-price' + (owned ? ' owned' : '');
+      price.textContent = tk.price === 0 ? t('shop_free') : `🪙 ${tk.price}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      if (equipped) {
+        btn.className = 'shop-action-btn equipped';
+        btn.textContent = `✔ ${t('shop_equipped')}`;
+        btn.disabled = true;
+      } else if (owned) {
+        btn.className = 'shop-action-btn equip';
+        btn.textContent = t('shop_use');
+        btn.addEventListener('click', () => equipTank(tk.id));
+      } else {
+        btn.className = 'shop-action-btn';
+        btn.textContent = `${t('shop_buy')} • 🪙 ${tk.price}`;
+        if ((state.coins || 0) < tk.price) btn.disabled = true;
+        btn.addEventListener('click', () => buyTank(tk.id));
+      }
+      foot.append(price, btn);
+      card.append(img, name, desc, foot);
+      grid.appendChild(card);
+    });
+  }
+  async function buyTank(tankId) {
+    const tk = tankDef(tankId);
+    if (!tk) return;
+    if ((state.unlockedTanks || []).includes(tankId)) { await equipTank(tankId); return; }
+    if ((state.coins || 0) < tk.price) { shopMsg(t('shop_need_coins'), false); return; }
+    state.coins -= tk.price;
+    state.unlockedTanks = [...new Set([...(state.unlockedTanks || ['tank_default']), tankId])];
+    state.activeTank = tankId;
+    updateCoinUI();
+    updateShopCoin();
+    await persist();
+    applyTankSkinSmooth();
+    renderShopAquariums();
+    shopMsg(`${t('shop_buy_success')} ${t(tk.nameKey)}`, true);
+  }
+  async function equipTank(tankId) {
+    if (!(state.unlockedTanks || []).includes(tankId)) return;
+    if (state.activeTank === tankId) return;
+    state.activeTank = tankId;
+    await persist();
+    applyTankSkinSmooth();
+    renderShopAquariums();
+    shopMsg(`${t('shop_equip_success')} ${t(tankDef(tankId).nameKey)}`, true);
+  }
+  function initShop() {
+    els.shopBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openShop();
+    });
+    els.shopCloseBtn?.addEventListener('click', closeShop);
+    els.shopBackdrop?.addEventListener('click', closeShop);
+  }
+
   /* ---------- DRAWER ---------- */
   function initDrawer() {
     const tg = els.drawerToggle, d = els.sideDrawer;
@@ -1939,15 +2162,20 @@ import {
   }
 
   /* ---------- INIT ---------- */
-  async function init() {
-    preload();
-    fb = await getFirebase();
-    // Katalog dinamis: pakai fish_catalog Firestore saat tersedia.
-    if (fb) subscribeCatalog(fb, (list) => { applyRemoteCatalog(list); });
-    await bumpVisitor();
-    initSettings(); initFeedback(); initDrawer();
+  function init() {
+    // Ikat tombol Start PALING DULU supaya klik tidak pernah mati total
+    // walau langkah init di bawah ada yang error.
+    try { bindSplashButton(() => { playIntro(() => showWelcome()); }); } catch (e) { console.warn(e); }
+    try { initSafe(); } catch (err) { console.error('init lanjutan gagal:', err); }
+  }
 
-    // Auth switch
+  function initSafe() {
+    preload();
+
+    // 1. Inisialisasi pengaturan, feedback, toko, dan drawer seketika
+    initSettings(); initFeedback(); initShop(); initDrawer();
+
+    // 2. Auth switch (Login <-> Register)
     els.switchToRegister?.addEventListener('click', () => switchAuth('register'));
     els.switchToLogin?.addEventListener('click', () => switchAuth('login'));
     switchAuth('login');
@@ -1956,11 +2184,13 @@ import {
     const local = !isFirebaseConfigured ? readLocal() : null;
     if (local && els.loginUsername) els.loginUsername.value = local.username;
 
+    // Login Form Submit (tunggu Firebase hanya bila user submit saat FB belum siap)
     els.loginForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const u = els.loginUsername?.value.trim(), p = els.loginPassword?.value;
       if (!u || !p) return;
       try {
+        if (!fb && isFirebaseConfigured) fb = await getFirebase();
         if (fb) {
           const cred = await fb.signInWithEmailAndPassword(fb.auth, usernameToEmail(u), p);
           const err = await afterAuth(cred.user.uid, u, false);
@@ -1974,6 +2204,7 @@ import {
       }
     });
 
+    // Register Form Submit
     els.registerForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const u = els.registerUsername?.value.trim(), p = els.registerPassword?.value, c = els.registerConfirm?.value;
@@ -1981,6 +2212,7 @@ import {
       if (p.length < 6) { showError(els.registerError, t('err_register_short')); return; }
       if (p !== c) { showError(els.registerError, t('err_register_mismatch')); return; }
       try {
+        if (!fb && isFirebaseConfigured) fb = await getFirebase();
         if (fb) {
           const cred = await fb.createUserWithEmailAndPassword(fb.auth, usernameToEmail(u), p);
           await afterAuth(cred.user.uid, u, true);
@@ -1998,8 +2230,7 @@ import {
       }
     });
 
-    // Gacha: undi dari fish_catalog sesuai bobot rarity
-    // (Common 50%, Rare 30%, Epic 13%, Legendary 6%, Heaven 1%).
+    // 3. Gacha: undi dari fish_catalog
     let pendingFish = null;
     els.gachaBtn?.addEventListener('click', () => {
       pendingFish = rollFishFromCatalog(fishCatalog) || fishCatalog[0] || FISH_DEFS[0];
@@ -2028,6 +2259,7 @@ import {
       playBGM(); showAquarium();
     });
 
+    // 4. Tombol aksi aquarium
     els.feedBtn?.addEventListener('click', feedFish);
     els.claimFoodBtn?.addEventListener('click', claimFood);
     els.gachaRepeatBtn?.addEventListener('click', handleGachaRepeat);
@@ -2046,23 +2278,35 @@ import {
     const webVid = els.webprofileVideo || $('webprofile-video');
     const webFallback = $('webprofile-fallback');
     if (webVid) {
+      const hideFallback = () => {
+        if (webFallback) webFallback.hidden = true;
+      };
+      const checkError = () => {
+        if (webFallback && webVid.error && webVid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE && webVid.readyState === 0) {
+          webFallback.hidden = false;
+        }
+      };
       webVid.addEventListener('play', () => {
         if (els.bgm && !els.bgm.paused) els.bgm.pause();
+        hideFallback();
       });
-      webVid.addEventListener('loadeddata', () => {
-        if (webFallback) webFallback.hidden = true;
+      webVid.addEventListener('playing', hideFallback);
+      webVid.addEventListener('loadedmetadata', hideFallback);
+      webVid.addEventListener('loadeddata', hideFallback);
+      webVid.addEventListener('canplay', hideFallback);
+      webVid.addEventListener('error', checkError);
+      webVid.addEventListener('click', () => {
+        if (webVid.paused) {
+          webVid.play().catch(() => {});
+        } else {
+          webVid.pause();
+        }
       });
-      webVid.addEventListener('canplay', () => {
-        if (webFallback) webFallback.hidden = true;
-      });
-      webVid.addEventListener('error', () => {
-        if (webFallback) webFallback.hidden = false;
-      }, true);
     }
     els.photoBackBtn?.addEventListener('click', closePhotoMode);
     els.photoSaveBtn?.addEventListener('click', savePhoto);
 
-    // Death modal action: reset status fresh & buka gacha
+    // Death modal action
     els.deathGachaBtn?.addEventListener('click', async () => {
       if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'true');
       state.hunger = 100;
@@ -2076,19 +2320,30 @@ import {
       showGacha();
     });
 
-    // Audio awal
+    // 5. Audio & i18n awal langsung aktif
     const a0 = getAudio();
     if (els.bgm) els.bgm.volume = a0.isMuted ? 0 : clamp(a0.volume, 0, 1);
-
-    // i18n awal: terapkan bahasa tersimpan sebelum splash
     applyStaticI18n();
     updateClaimButton();
     updateCoinUI();
 
-    // Alur: splash (klik tombol mulai) -> intro video -> welcome (login/register)
+    // 6. Tampilkan Splash & ikat tombol Play seketika (tanpa delay jaringan!)
     showSplash(() => {
       playIntro(() => showWelcome());
     });
+
+    // 7. Muat Firebase, katalog dinamis, dan visitor counter di latar belakang
+    (async () => {
+      try {
+        fb = await getFirebase();
+        if (fb) {
+          subscribeCatalog(fb, (list) => { applyRemoteCatalog(list); });
+          bumpVisitor().catch(() => {});
+        }
+      } catch (err) {
+        console.warn('Firebase background init warning:', err);
+      }
+    })();
 
     // Visibility: hemat timer + terapkan decay saat kembali
     document.addEventListener('visibilitychange', async () => {
@@ -2096,7 +2351,7 @@ import {
       else if (state.screen === 'aquarium') {
         if (fb && state.uid) { const d = await loadUserDoc(state.uid); if (d) applySaveToState({ ...d, username: state.username }); }
         else { const l = readLocal(); if (l) applySaveToState(l); }
-        updateStatusBars(); startDecayInterval(); startClaimTimer(); startSwimLoop();
+        updateStatusBars(); updateBackground(); updateAquariumSkin(); startDecayInterval(); startClaimTimer(); startSwimLoop();
         if (state._pendingDeathNotice) {
           state._pendingDeathNotice = false;
           triggerFishDeath();

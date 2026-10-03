@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2.5">
     <!-- Firebase SDK (ES Modules) -->
     <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script.js?v=2.5"></script>
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
@@ -29,6 +29,7 @@
     <section id="intro-screen" class="intro-screen" aria-hidden="true">
         <div class="intro-video-wrapper">
             <video id="intro-video" src="assets/intro/intro.mp4" playsinline preload="auto"></video>
+            <button type="button" id="intro-skip-btn" class="intro-skip-btn" aria-label="Skip Intro" data-i18n="intro_skip">Lewati ▶</button>
         </div>
     </section>
 
@@ -114,6 +115,11 @@
                 <!-- Feedback Button (Masukan) -->
                 <button id="feedback-btn" class="btn-settings btn-feedback" aria-label="Kritik dan Saran" data-i18n-aria-label="feedback_btn_aria" title="Masukan" data-i18n-title="feedback_title">
                     <span id="feedback-icon">💬</span>
+                </button>
+
+                <!-- Shop Button (Toko) -->
+                <button id="shop-btn" class="btn-settings btn-shop" aria-label="Toko" data-i18n-aria-label="shop_btn_aria" title="Toko" data-i18n-title="shop_title">
+                    <span id="shop-icon">🛍️</span>
                 </button>
 
                 <!-- Collapsible Drawer Toggle -->
@@ -395,17 +401,15 @@
                     <div class="webprofile-header-badge">🎬</div>
                     <div class="webprofile-header-text">
                         <h3 id="webprofile-title" data-i18n="webprofile_title">Profil Web</h3>
-                        <p class="webprofile-header-subtitle" data-i18n="webprofile_subtitle">Video Pengenalan (16:9)</p>
+                        <p class="webprofile-header-subtitle" data-i18n="webprofile_subtitle">Ananda Ibrahim</p>
                     </div>
                     <button id="webprofile-close-btn" class="settings-close" aria-label="Close web profile">&times;</button>
                 </div>
                 <div class="webprofile-body">
                     <div class="webprofile-video-container">
-                        <video id="webprofile-video" class="webprofile-video" playsinline controls preload="metadata">
+                        <video id="webprofile-video" class="webprofile-video" playsinline loop preload="auto">
                             <source src="assets/webprofile.mp4" type="video/mp4">
-                            <source src="assets/webprofile.webm" type="video/webm">
-                            <source src="assets/webprofile.mov" type="video/quicktime">
-                            <source src="assets/intro/webprofile.mp4" type="video/mp4">
+                            <source src="assets/1002 (2).mp4" type="video/mp4">
                             Browser Anda tidak mendukung pemutar video.
                         </video>
                         <div id="webprofile-fallback" class="webprofile-fallback" hidden>
@@ -487,6 +491,49 @@
             </div>
         </div>
     </div>
+
+        <!-- Shop Modal (Toko Jakarta — Fase 1: Tema Akuarium) -->
+        <div id="shop-modal" class="settings-modal shop-modal" aria-hidden="true">
+            <div class="settings-backdrop" id="shop-backdrop"></div>
+            <div class="settings-dialog shop-dialog" role="dialog" aria-labelledby="shop-title">
+                <div class="settings-header shop-header">
+                    <div class="shop-header-title">
+                        <h3 id="shop-title" data-i18n="shop_title">🛍️ Toko Jakarta</h3>
+                        <span id="shop-coin-value" class="shop-coin-pill" aria-live="polite">🪙 0</span>
+                    </div>
+                    <button id="shop-close-btn" class="settings-close" aria-label="Tutup toko" data-i18n-aria-label="shop_close_aria">&times;</button>
+                </div>
+
+                <div class="shop-tabs" role="tablist" aria-label="Kategori toko">
+                    <button type="button" id="shop-tab-themes" class="shop-tab active" role="tab" aria-selected="true" data-i18n="shop_tab_aquariums">🫧 Desain Akuarium</button>
+                    <button type="button" id="shop-tab-decor" class="shop-tab" role="tab" aria-selected="false" disabled><span data-i18n="shop_tab_decor">🪨 Dekorasi</span> <span class="shop-soon-badge" data-i18n="shop_coming_soon">Coming Soon</span></button>
+                    <button type="button" id="shop-tab-acc" class="shop-tab" role="tab" aria-selected="false" disabled><span data-i18n="shop_tab_acc">🎀 Aksesoris</span> <span class="shop-soon-badge" data-i18n="shop_coming_soon">Coming Soon</span></button>
+                </div>
+
+                <div class="settings-body shop-body">
+                    <div id="shop-theme-grid" class="shop-grid" role="tabpanel" aria-labelledby="shop-tab-themes"></div>
+                    <span id="shop-status-msg" class="shop-status-msg" hidden></span>
+                </div>
+            </div>
+        </div>
+    <!-- Fallback non-module: kalau script.js gagal dimuat (mis. dibuka via
+         file:// atau cache rusak), klik Start tetap memberi tahu penyebabnya
+         alih-alih diam seperti tombol mati. -->
+    <script>
+        window.__aqSplashReady = false;
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('splash-play-btn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                if (window.__aqSplashReady) return;
+                setTimeout(function () {
+                    if (!window.__aqSplashReady) {
+                        alert('Game gagal dimuat.\n\nCoba:\n1) Buka lewat http://localhost (jangan double-klik file HTML).\n2) Hard refresh: Ctrl+Shift+R.\n3) Buka Console (F12) dan kirim pesan error-nya.');
+                    }
+                }, 600);
+            });
+        });
+    </script>
 
 </body>
 </html>

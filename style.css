@@ -300,6 +300,41 @@ body {
   display: block;
 }
 
+.intro-skip-btn {
+  position: absolute;
+  top: clamp(16px, 3vh, 28px);
+  right: clamp(16px, 3vw, 28px);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  background: rgba(15, 20, 26, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+}
+
+.intro-skip-btn:hover {
+  background: rgba(25, 35, 45, 0.88);
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+
+.intro-skip-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 .btn-replay-intro {
   background: rgba(111, 174, 170, 0.15);
   border: 1.5px solid rgba(111, 174, 170, 0.5);
@@ -2963,6 +2998,7 @@ body {
   display: block;
   background: #000000;
   border-radius: 14px;
+  cursor: pointer;
 }
 
 .webprofile-fallback {
@@ -2979,6 +3015,10 @@ body {
   z-index: 2;
   border-radius: 14px;
   box-sizing: border-box;
+}
+
+.webprofile-fallback[hidden] {
+  display: none;
 }
 
 .webprofile-fallback-icon {
@@ -3090,17 +3130,24 @@ body {
   pointer-events: auto;
   cursor: pointer;
 }
+.fish-body {
+  display: block;
+  position: relative;
+  width: fit-content;
+  height: fit-content;
+  will-change: transform;
+}
 .fish-wrap .fish-sprite {
   pointer-events: auto;
 }
-.fish-wrap.fish-excited .fish-sprite {
+.fish-wrap.fish-excited .fish-body {
   animation: fishWiggle 0.6s ease;
 }
 @keyframes fishWiggle {
   0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-12deg) scale(1.08); }
-  50% { transform: rotate(10deg) scale(1.05); }
-  75% { transform: rotate(-6deg) scale(1.03); }
+  25% { transform: rotate(-8deg) scale(1.08); }
+  50% { transform: rotate(8deg) scale(1.05); }
+  75% { transform: rotate(-4deg) scale(1.02); }
   100% { transform: rotate(0deg) scale(1); }
 }
 .fish-nick {
@@ -3202,7 +3249,10 @@ body {
   to { background-position: 30px 160px, -20px 190px, 15px 150px, -25px 170px, 20px 160px, -15px 180px; }
 }
 body.is-raining .bg-layer {
-  filter: brightness(0.82) saturate(0.92);
+  filter: brightness(0.92) saturate(0.95);
+}
+body.is-raining.is-night .bg-layer {
+  filter: brightness(0.85) saturate(0.95);
 }
 .weather-badge {
   position: absolute;
@@ -3763,4 +3813,256 @@ body.photo-mode .weather-badge {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ========================================
+   SHOP (TOKO JAKARTA — FASE 1: TEMA AKUARIUM)
+   ======================================== */
+
+.btn-shop {
+  left: calc(clamp(14px, 3vw, 28px) + 108px);
+}
+
+.btn-shop:hover {
+  transform: translateY(-2px) scale(1.08);
+  background: var(--white);
+  box-shadow: 0 6px 18px rgba(74, 64, 54, 0.18);
+}
+
+.shop-dialog {
+  max-width: 480px;
+  width: 94%;
+  max-height: min(88vh, 640px);
+}
+
+.shop-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #7A5B1E;
+  background: rgba(255, 200, 60, 0.18);
+  border: 1.5px solid rgba(200, 150, 40, 0.45);
+  border-radius: 999px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+}
+
+.shop-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 6px;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(246, 241, 231, 0.7);
+  border: 1.5px solid rgba(169, 216, 210, 0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.shop-tab.active {
+  background: linear-gradient(135deg, #4D8B84 0%, #356D67 100%);
+  border-color: #356D67;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(77, 139, 132, 0.4);
+}
+
+.shop-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.shop-soon-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(217, 119, 112, 0.15);
+  border: 1px solid rgba(217, 119, 112, 0.4);
+  color: #A33;
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.shop-tab.active .shop-soon-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.shop-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(169, 216, 210, 0.55);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(74, 64, 54, 0.08);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.shop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 64, 54, 0.14);
+}
+
+.shop-card.equipped {
+  border-color: #4D8B84;
+  box-shadow: 0 0 0 2px rgba(77, 139, 132, 0.35), 0 8px 20px rgba(74, 64, 54, 0.12);
+}
+
+.shop-preview {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  object-fit: contain;
+  border-radius: 12px;
+  background: radial-gradient(circle at center, #F4FAF9 0%, #E2EFEF 100%);
+  border: 1px solid rgba(169, 216, 210, 0.45);
+  padding: 6px;
+  box-sizing: border-box;
+  display: block;
+}
+
+.shop-card-name {
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.shop-card-desc {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-light);
+  margin: 0;
+  flex: 1;
+}
+
+.shop-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-price {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #7A5B1E;
+  white-space: nowrap;
+}
+
+.shop-price.owned {
+  color: #2F6F4E;
+}
+
+.shop-action-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  background: linear-gradient(135deg, #E8A93D 0%, #C77F1A 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(199, 127, 26, 0.35);
+}
+
+.shop-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(199, 127, 26, 0.45);
+}
+
+.shop-action-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.shop-action-btn.equip {
+  background: linear-gradient(135deg, #4D8B84 0%, #356D67 100%);
+  box-shadow: 0 4px 12px rgba(77, 139, 132, 0.35);
+}
+
+.shop-action-btn.equipped {
+  background: rgba(46, 139, 87, 0.12);
+  border: 1.5px solid rgba(46, 139, 87, 0.4);
+  color: #2F6F4E;
+  box-shadow: none;
+  cursor: default;
+}
+
+.shop-action-btn:disabled:not(.equipped) {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shop-status-msg {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 8px;
+  animation: fadeIn 200ms ease;
+}
+
+.shop-status-msg.status-success {
+  color: #2F6F4E;
+  background: rgba(46, 139, 87, 0.12);
+  border: 1px solid rgba(46, 139, 87, 0.25);
+}
+
+.shop-status-msg.status-error {
+  color: #A33;
+  background: rgba(217, 119, 112, 0.12);
+  border: 1px solid rgba(217, 119, 112, 0.25);
+}
+
+@media (max-width: 420px) {
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
+  .shop-tab {
+    font-size: 0.7rem;
+  }
 }
