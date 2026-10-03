@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2.5">
+    <link rel="stylesheet" href="style.css?v=2.7">
     <!-- Firebase SDK (ES Modules) -->
     <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js?v=2.5"></script>
+    <script type="module" src="script.js?v=2.7"></script>
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
@@ -516,6 +516,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- Rotate Device Prompt (Mobile Portrait -> Landscape) -->
+        <aside id="rotate-device-overlay" class="rotate-device-overlay" aria-live="polite">
+            <div class="rotate-device-card">
+                <div class="rotate-phone-anim" aria-hidden="true">
+                    <div class="rotate-phone-icon">
+                        <div class="rotate-phone-notch"></div>
+                        <div class="rotate-phone-screen">🐟</div>
+                    </div>
+                    <div class="rotate-arrow-badge">🔄</div>
+                </div>
+                <h3 class="rotate-title" data-i18n="rotate_title">Miringkan Ponsel Kamu</h3>
+                <p class="rotate-desc" data-i18n="rotate_desc">
+                    Game ini dirancang untuk dinikmati dalam mode Landscape (mendatar) 🫧
+                </p>
+                <button type="button" id="rotate-bypass-btn" class="rotate-bypass-btn" data-i18n="rotate_bypass">
+                    Tetap main dalam posisi tegak ▶
+                </button>
+            </div>
+        </aside>
+
     <!-- Fallback non-module: kalau script.js gagal dimuat (mis. dibuka via
          file:// atau cache rusak), klik Start tetap memberi tahu penyebabnya
          alih-alih diam seperti tombol mati. -->

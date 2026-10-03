@@ -17,13 +17,20 @@ import {
      Sumber utama: koleksi Firestore `fish_catalog` (realtime).
      FISH_DEFS di bawah adalah fallback lokal agar game tetap
      playable saat offline / katalog masih kosong. */
-  const FISH_DEFS = DEFAULT_CATALOG.map((f) => ({ ...f }));
+  const FISH_DEFS = DEFAULT_CATALOG.map((f) => normalizeCatalogDoc(f));
   // Katalog runtime: diganti isi fish_catalog saat tersedia.
   let fishCatalog = FISH_DEFS.map((f) => ({ ...f }));
   const REDEEM_CODES = { M3Y: 'cupang_glow', B41M: 'arwana' };
-  const fishById = (id) =>
-    fishCatalog.find((f) => f.id === id) ||
-    FISH_DEFS.find((f) => f.id === id) || null;
+  const fishById = (id) => {
+    if (!id) return null;
+    const candidates = (id === 'cupang' || id === 'cupang_glow') ? ['cupang_glow', 'cupang'] : [id];
+    for (const key of candidates) {
+      const found = fishCatalog.find((f) => f.id === key || f.fishId === key) ||
+                    FISH_DEFS.find((f) => f.id === key || f.fishId === key);
+      if (found) return found;
+    }
+    return null;
+  };
   function applyRemoteCatalog(list) {
     if (Array.isArray(list) && list.length) {
       fishCatalog = list.map((f) => ({ ...normalizeCatalogDoc(f) }));
@@ -131,7 +138,7 @@ import {
     } catch { return new Date(ts).toLocaleString(); }
   };
   const fishDisplayName = (id) => {
-    if (id === 'cupang_glow') return t('fish_glow_betta');
+    if (id === 'cupang_glow' || id === 'cupang') return t('fish_glow_betta');
     if (id === 'arwana') return t('fish_arowana');
     return fishById(id)?.name || id;
   };
@@ -620,22 +627,28 @@ import {
       wrap.dataset.rarity = f.rarity || def.rarity || 'Common';
       // Heaven: aura keemasan (efek visual tingkat tertinggi).
       if ((f.rarity || def.rarity) === 'Heaven') wrap.classList.add('heaven-aura');
+      const rawSrc = def.src || def.imagePath || def.originalSrc || 'assets/fish/1-common/manfish (common)_tight.png';
+      const safeSrc = (rawSrc.includes('cupang glow') && !rawSrc.includes('_tight.png'))
+        ? 'assets/fish/4-heaven/cupang glow (heaven)_tight.png'
+        : rawSrc;
       const img = document.createElement('img');
-      img.className = 'fish-sprite'; img.alt = f.nickname || fishDisplayName(def.id); img.src = def.src;
+      img.className = 'fish-sprite';
+      img.alt = f.nickname || fishDisplayName(def.id);
+      img.src = encodeURI(safeSrc);
       img.style.setProperty('--fish-scale', def.scale || 1);
       let retryCount = 0;
       img.onerror = () => {
         retryCount++;
         if (retryCount === 1) {
-          if (def.src.includes('_tight.png')) {
-            img.src = def.src.replace('_tight.png', '.png');
-          } else if (def.src.includes('.png')) {
-            img.src = def.src.replace('.png', '_tight.png');
+          if (safeSrc.includes('_tight.png')) {
+            img.src = encodeURI(safeSrc.replace('_tight.png', '.png'));
+          } else if (safeSrc.includes('.png')) {
+            img.src = encodeURI(safeSrc.replace('.png', '_tight.png'));
           }
         } else if (retryCount === 2) {
-          const fb = DEFAULT_CATALOG.find((d) => d.id === def.id || d.fishId === def.id);
-          if (fb && fb.imagePath && fb.imagePath !== img.src) {
-            img.src = fb.imagePath;
+          const fb = DEFAULT_CATALOG.find((d) => d.id === def.id || d.fishId === def.id || ((def.id === 'cupang' || def.id === 'cupang_glow') && (d.id === 'cupang_glow' || d.id === 'cupang')));
+          if (fb && (fb.src || fb.imagePath) && (fb.src || fb.imagePath) !== img.src) {
+            img.src = encodeURI(fb.src || fb.imagePath);
           } else {
             img.src = 'assets/fish/1-common/manfish (common)_tight.png';
           }
@@ -1269,6 +1282,22 @@ import {
   // tidak pernah mati walau ada error di langkah init berikutnya.
   // Satu-satunya listener klik; callback default = putar intro lalu welcome.
   let splashOnPlay = null;
+  function attemptLandscapeLock() {
+    try {
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      if (isMobile) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      }
+    } catch {}
+  }
+
   function bindSplashButton(onPlay) {
     if (typeof onPlay === 'function') splashOnPlay = onPlay;
     const btn = $('splash-play-btn');
@@ -1277,6 +1306,7 @@ import {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      attemptLandscapeLock();
       try {
         if (splashOnPlay) splashOnPlay();
         else playIntro(() => showWelcome());
@@ -1628,8 +1658,9 @@ import {
       const img = document.createElement('img');
       img.className = 'journal-sprite';
       img.alt = f.nickname || def.name;
-      img.src = def.src;
-      img.onerror = () => { img.src = def.originalSrc; };
+      const journalSrc = def.src || def.imagePath || def.originalSrc || 'assets/fish/1-common/manfish (common)_tight.png';
+      img.src = encodeURI(journalSrc);
+      img.onerror = () => { img.src = encodeURI(def.originalSrc || def.imagePath || 'assets/fish/1-common/manfish (common)_tight.png'); };
       const info = document.createElement('div');
       info.className = 'journal-info';
       const row = document.createElement('div');
@@ -2319,6 +2350,14 @@ import {
       if (els.deathModal) els.deathModal.setAttribute('aria-hidden', 'true');
       showGacha();
     });
+
+    const rotateBypassBtn = $('rotate-bypass-btn');
+    const rotateOverlay = $('rotate-device-overlay');
+    if (rotateBypassBtn && rotateOverlay) {
+      rotateBypassBtn.addEventListener('click', () => {
+        rotateOverlay.classList.add('bypassed');
+      });
+    }
 
     // 5. Audio & i18n awal langsung aktif
     const a0 = getAudio();

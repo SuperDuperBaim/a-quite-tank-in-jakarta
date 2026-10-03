@@ -39,6 +39,7 @@ export const FISH_IMAGE_PATHS = [
   'assets/fish/1-common/manfish (common)_tight.png',
   'assets/fish/2-rare/koki (rare)_tight.png',
   'assets/fish/3-legend/arwarna (legend)_tight.png',
+  'assets/fish/4-heaven/cupang glow (heaven)_tight.png',
   'assets/fish/1-common/Neon Tetra (common).png',
   'assets/fish/1-common/corydoras (common).png',
   'assets/fish/2-rare/koki (rare).png',
@@ -53,13 +54,14 @@ export const fishImageLabel = (path) => String(path || '').replace(/^.*\//, '');
    "cupang glow (heaven)" -> Heaven,
    "arwarna (legend)" -> Legendary. */
 export const DEFAULT_CATALOG = [
-  { id: 'clownfish',   fishId: 'clownfish',   name: 'Clownfish',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',   description: 'Ikan kecil yang ramah dan aktif.' },
-  { id: 'blue_tang',   fishId: 'blue_tang',   name: 'Blue Tang',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/manfish (common)_tight.png', description: 'Ikan biru yang tenang.' },
-  { id: 'goldfish',    fishId: 'goldfish',    name: 'Goldfish',         rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/2-rare/koki (rare)_tight.png',        description: 'Ikan mas hias yang anggun.' },
-  { id: 'betta',       fishId: 'betta',       name: 'Betta',            rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/1-common/corydoras (common).png',     description: 'Petarung kecil yang pemberani.' },
-  { id: 'guppy',       fishId: 'guppy',       name: 'Guppy',            rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',   description: 'Ikan mungil yang lincah.' },
-  { id: 'arwana',      fishId: 'arwana',      name: 'Ikan Arwana',      rarity: 'Legendary', scale: 2.3, imagePath: 'assets/fish/3-legend/arwarna (legend)_tight.png', description: 'Legendaris, gagah dan memukau.' },
-  { id: 'cupang_glow', fishId: 'cupang_glow', name: 'Ikan Cupang Glow', rarity: 'Heaven',    scale: 1,   imagePath: 'assets/fish/4-heaven/cupang glow (heaven).png',  description: 'Surgawi, memancarkan aura keemasan.' },
+  { id: 'clownfish',   fishId: 'clownfish',   name: 'Clownfish',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',    src: 'assets/fish/1-common/Neon Tetra (common).png',    originalSrc: 'assets/fish/1-common/Neon Tetra (common).png',    description: 'Ikan kecil yang ramah dan aktif.' },
+  { id: 'blue_tang',   fishId: 'blue_tang',   name: 'Blue Tang',        rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/manfish (common)_tight.png',  src: 'assets/fish/1-common/manfish (common)_tight.png',  originalSrc: 'assets/fish/1-common/manfish (common)_tight.png',  description: 'Ikan biru yang tenang.' },
+  { id: 'goldfish',    fishId: 'goldfish',    name: 'Goldfish',         rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/2-rare/koki (rare)_tight.png',         src: 'assets/fish/2-rare/koki (rare)_tight.png',         originalSrc: 'assets/fish/2-rare/koki (rare)_tight.png',         description: 'Ikan mas hias yang anggun.' },
+  { id: 'betta',       fishId: 'betta',       name: 'Betta',            rarity: 'Rare',      scale: 1,   imagePath: 'assets/fish/1-common/corydoras (common).png',      src: 'assets/fish/1-common/corydoras (common).png',      originalSrc: 'assets/fish/1-common/corydoras (common).png',      description: 'Petarung kecil yang pemberani.' },
+  { id: 'guppy',       fishId: 'guppy',       name: 'Guppy',            rarity: 'Common',    scale: 1,   imagePath: 'assets/fish/1-common/Neon Tetra (common).png',    src: 'assets/fish/1-common/Neon Tetra (common).png',    originalSrc: 'assets/fish/1-common/Neon Tetra (common).png',    description: 'Ikan mungil yang lincah.' },
+  { id: 'arwana',      fishId: 'arwana',      name: 'Ikan Arwana',      rarity: 'Legendary', scale: 2.3, imagePath: 'assets/fish/3-legend/arwarna (legend)_tight.png',  src: 'assets/fish/3-legend/arwarna (legend)_tight.png',  originalSrc: 'assets/fish/3-legend/arwarna (legend)_tight.png',  description: 'Legendaris, gagah dan memukau.' },
+  { id: 'cupang_glow', fishId: 'cupang_glow', name: 'Ikan Cupang Glow', rarity: 'Heaven',    scale: 1.35, imagePath: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', src: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', originalSrc: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', description: 'Surgawi, memancarkan aura keemasan.' },
+  { id: 'cupang',      fishId: 'cupang',      name: 'Ikan Cupang Glow', rarity: 'Heaven',    scale: 1.35, imagePath: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', src: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', originalSrc: 'assets/fish/4-heaven/cupang glow (heaven)_tight.png', description: 'Surgawi, memancarkan aura keemasan.' },
 ];
 
 export function isValidRarity(r) {

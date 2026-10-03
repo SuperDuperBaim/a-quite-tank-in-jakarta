@@ -25,7 +25,15 @@ let allFeedbacks = [];
 let remoteIds = new Set();
 // Katalog runtime: isi fish_catalog, fallback default lokal.
 let catalog = DEFAULT_CATALOG.map((f) => ({ ...normalizeCatalogDoc(f) }));
-const catalogById = (id) => catalog.find((f) => f.id === id) || null;
+const catalogById = (id) => {
+  if (!id) return null;
+  const candidates = (id === 'cupang' || id === 'cupang_glow') ? ['cupang', 'cupang_glow'] : [id];
+  for (const c of candidates) {
+    const f = catalog.find((x) => x.id === c || x.fishId === c);
+    if (f) return f;
+  }
+  return null;
+};
 
 function fmtDate(ts) {
   if (!ts) return '–';

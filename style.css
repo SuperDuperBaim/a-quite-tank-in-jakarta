@@ -4066,3 +4066,294 @@ body.photo-mode .weather-badge {
     font-size: 0.7rem;
   }
 }
+
+/* ========================================
+   ROTATE DEVICE OVERLAY (Mobile Portrait -> Landscape)
+   ======================================== */
+
+.rotate-device-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: radial-gradient(circle at center, rgba(30, 48, 54, 0.96) 0%, rgba(16, 24, 28, 0.98) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  animation: fadeIn 250ms ease;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+  .rotate-device-overlay:not(.bypassed) {
+    display: flex !important;
+  }
+}
+
+.rotate-device-card {
+  max-width: 340px;
+  width: 90%;
+  background: rgba(255, 253, 249, 0.96);
+  border: 1.5px solid rgba(169, 216, 210, 0.75);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  padding: 28px 22px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  animation: modalPop 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rotate-phone-anim {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rotate-phone-icon {
+  width: 44px;
+  height: 72px;
+  border: 3.5px solid #E9C46A;
+  border-radius: 12px;
+  position: relative;
+  background: rgba(233, 196, 106, 0.15);
+  box-shadow: 0 0 24px rgba(233, 196, 106, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: phoneRotateLoop 2.4s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.rotate-phone-notch {
+  position: absolute;
+  top: 4px;
+  width: 14px;
+  height: 3px;
+  background: #E9C46A;
+  border-radius: 999px;
+}
+
+.rotate-phone-screen {
+  font-size: 1.4rem;
+  user-select: none;
+}
+
+@keyframes phoneRotateLoop {
+  0%, 15% {
+    transform: rotate(0deg) scale(1);
+  }
+  45%, 70% {
+    transform: rotate(-90deg) scale(1.08);
+  }
+  90%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.rotate-arrow-badge {
+  position: absolute;
+  bottom: 0;
+  right: 2px;
+  font-size: 1.3rem;
+  background: #4D8B84;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  animation: pulseBadge 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseBadge {
+  from { transform: scale(0.92); }
+  to { transform: scale(1.08); }
+}
+
+.rotate-title {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.rotate-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-light);
+  margin: 0 0 18px;
+}
+
+.rotate-bypass-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4D8B84;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 10px 14px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.rotate-bypass-btn:hover {
+  color: #E76F51;
+  transform: translateY(-1px);
+}
+
+.rotate-bypass-btn:active {
+  transform: scale(0.96);
+}
+
+/* ========================================
+   LANDSCAPE MOBILE VIEWPORT OPTIMIZATIONS
+   (When mobile phone is in landscape, height <= 520px)
+   ======================================== */
+
+@media (orientation: landscape) and (max-height: 520px) {
+  /* Top Bar Actions & Weather */
+  .btn-settings {
+    top: 8px;
+    left: 8px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+  .btn-feedback {
+    top: 8px;
+    left: 50px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+  .btn-shop {
+    top: 8px;
+    left: 92px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+  .weather-badge {
+    top: 8px;
+    left: 136px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+  }
+
+  /* Drawer Toggle & Side Drawer */
+  .drawer-toggle {
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .side-drawer {
+    top: 8px;
+    right: 8px;
+    width: min(290px, 38vw);
+    max-height: calc(100vh - 16px);
+  }
+
+  .side-drawer .drawer-header {
+    padding: 6px 12px;
+    margin-bottom: 4px;
+  }
+
+  .side-drawer .drawer-title {
+    font-size: 0.82rem;
+  }
+
+  .side-drawer .drawer-content {
+    overflow-y: auto;
+    max-height: calc(100vh - 62px);
+    padding-right: 4px;
+    gap: 6px;
+  }
+
+  .side-drawer .status-panel {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .side-drawer .status-row {
+    font-size: 0.72rem;
+  }
+
+  .side-drawer .food-stock {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .side-drawer .btn-claim {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .side-drawer .coin-row {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .side-drawer .actions-panel {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+
+  .side-drawer .btn-action {
+    padding: 5px 2px;
+    min-height: 44px;
+  }
+
+  .side-drawer .btn-icon {
+    font-size: 1.05rem;
+  }
+
+  .side-drawer .btn-label {
+    font-size: 0.68rem;
+  }
+
+  /* Welcome Screen Login / Register in Short Landscape */
+  .welcome-themed-content {
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .auth-title {
+    font-size: 1.35rem;
+    margin-bottom: 2px;
+  }
+
+  .auth-form {
+    gap: 6px;
+  }
+
+  /* Modals in landscape: never clip off bottom */
+  .settings-dialog,
+  .shop-dialog,
+  .howto-dialog,
+  .journal-dialog,
+  .webprofile-dialog,
+  .death-dialog {
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+}

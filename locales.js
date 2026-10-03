@@ -163,6 +163,10 @@ export const translations = {
       tank_side_plant_desc: 'Akuarium estetik dengan hiasan tanaman air di sisi samping.',
       tank_full_plant_name: 'Akuarium Full Plant',
       tank_full_plant_desc: 'Akuarium rimbun penuh tanaman air segar dan alami.',
+      /* --- Rotasi Layar (Landscape) --- */
+      rotate_title: 'Miringkan Ponsel Kamu',
+      rotate_desc: 'Game ini dirancang untuk dinikmati dalam mode Landscape (mendatar) 🫧',
+      rotate_bypass: 'Tetap main dalam posisi tegak ▶',
   },
   en: {
     app_title: 'A Quite Tank In Jakarta',
@@ -322,6 +326,10 @@ export const translations = {
       tank_side_plant_desc: 'Aesthetic tank with lush aquascape plants on the sides.',
       tank_full_plant_name: 'Full Plant Tank',
       tank_full_plant_desc: 'Lush tank completely filled with aquatic greenery.',
+      /* --- Screen Rotation (Landscape) --- */
+      rotate_title: 'Please Rotate Your Device',
+      rotate_desc: 'This cozy aquarium is best experienced in Landscape mode 🫧',
+      rotate_bypass: 'Play in portrait anyway ▶',
   },
   ja: {
     app_title: 'A Quite Tank In Jakarta',
@@ -481,6 +489,10 @@ export const translations = {
       tank_side_plant_desc: '両サイドに美しい水草が配置された水槽。',
       tank_full_plant_name: 'フルプラント水槽',
       tank_full_plant_desc: 'みずみずしい水草でいっぱいの豊かな水槽。',
+      /* --- 画面回転 (Landscape) --- */
+      rotate_title: '画面を横向きにしてください',
+      rotate_desc: 'このアクアリウムは横画面（ランドスケープ）でお楽しみいただけます 🫧',
+      rotate_bypass: 'このまま縦画面で遊ぶ ▶',
   },
 };
 
