@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2.7">
+    <link rel="stylesheet" href="style.css?v=2.8">
     <!-- Firebase SDK (ES Modules) -->
     <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js?v=2.7"></script>
+    <script type="module" src="script.js?v=2.8"></script>
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
@@ -29,7 +29,6 @@
     <section id="intro-screen" class="intro-screen" aria-hidden="true">
         <div class="intro-video-wrapper">
             <video id="intro-video" src="assets/intro/intro.mp4" playsinline preload="auto"></video>
-            <button type="button" id="intro-skip-btn" class="intro-skip-btn" aria-label="Skip Intro" data-i18n="intro_skip">Lewati ▶</button>
         </div>
     </section>
 
@@ -403,11 +402,10 @@
                         <h3 id="webprofile-title" data-i18n="webprofile_title">Profil Web</h3>
                         <p class="webprofile-header-subtitle" data-i18n="webprofile_subtitle">Ananda Ibrahim</p>
                     </div>
-                    <button id="webprofile-close-btn" class="settings-close" aria-label="Close web profile">&times;</button>
                 </div>
                 <div class="webprofile-body">
                     <div class="webprofile-video-container">
-                        <video id="webprofile-video" class="webprofile-video" playsinline loop preload="auto">
+                        <video id="webprofile-video" class="webprofile-video" playsinline preload="auto">
                             <source src="assets/webprofile.mp4" type="video/mp4">
                             <source src="assets/1002 (2).mp4" type="video/mp4">
                             Browser Anda tidak mendukung pemutar video.
@@ -418,12 +416,10 @@
                             <p class="webprofile-fallback-desc" data-i18n="webprofile_placeholder_desc">
                                 Letakkan file video berformat 16:9 di folder assets/ dengan judul (webprofile.mp4)
                             </p>
+                            <button type="button" class="btn btn-webprofile-done" style="margin-top:10px;padding:8px 16px;font-size:0.85rem;" onclick="document.getElementById('webprofile-modal').setAttribute('aria-hidden','true')">
+                                Tutup
+                            </button>
                         </div>
-                    </div>
-                    <div class="webprofile-footer">
-                        <button type="button" id="webprofile-done-btn" class="btn btn-webprofile-done" data-i18n="webprofile_done_btn">
-                            Lanjut Bermain ▶
-                        </button>
                     </div>
                 </div>
             </div>

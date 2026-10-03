@@ -554,6 +554,9 @@ import {
       }
     }
     if (vid) {
+      vid.loop = false;
+      vid.currentTime = 0;
+      vid.onended = closeWebprofile;
       if (els.bgm && !els.bgm.paused) {
         els.bgm.pause();
       }
@@ -1374,16 +1377,9 @@ import {
       }
     }, 6000);
 
-    // Lewati video dengan tombol Lewati atau klik layar
+    // Intro video diputar penuh tanpa tombol skip
     const skipBtn = els.introSkipBtn || $('intro-skip-btn');
-    if (skipBtn) {
-      skipBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        finish();
-      };
-    }
-    screen.onclick = () => finish();
+    if (skipBtn) skipBtn.hidden = true;
 
     // Putar video langsung di dalam user gesture loop
     const p = video.play();
@@ -2302,13 +2298,11 @@ import {
     els.howtoCloseBtn?.addEventListener('click', () => closeHowto(true));
     els.howtoBackdrop?.addEventListener('click', () => closeHowto(true));
     els.howtoPlayBtn?.addEventListener('click', () => closeHowto(true));
-    els.webprofileCloseBtn?.addEventListener('click', closeWebprofile);
-    els.webprofileBackdrop?.addEventListener('click', closeWebprofile);
-    els.webprofileDoneBtn?.addEventListener('click', closeWebprofile);
-
+    // Web Profile video: otomatis close saat selesai, tanpa tombol close / backdrop close
     const webVid = els.webprofileVideo || $('webprofile-video');
     const webFallback = $('webprofile-fallback');
     if (webVid) {
+      webVid.loop = false;
       const hideFallback = () => {
         if (webFallback) webFallback.hidden = true;
       };
@@ -2326,6 +2320,7 @@ import {
       webVid.addEventListener('loadeddata', hideFallback);
       webVid.addEventListener('canplay', hideFallback);
       webVid.addEventListener('error', checkError);
+      webVid.addEventListener('ended', closeWebprofile);
       webVid.addEventListener('click', () => {
         if (webVid.paused) {
           webVid.play().catch(() => {});
