@@ -82,14 +82,15 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-cream);
+  background-color: #FFFFFF;
   color: var(--text);
   line-height: 1.5;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: var(--space-md);
+  align-items: center;
+  padding: 0;
   overflow-x: hidden;
 }
 
@@ -142,14 +143,17 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0b0f14;
+  background-color: #FFFFFF;
   overflow: hidden;
   opacity: 1;
   visibility: visible;
+  padding: 16px;
+  box-sizing: border-box;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s ease;
 }
 
@@ -162,6 +166,21 @@ body {
 .splash-screen.fade-out {
   opacity: 0;
   visibility: hidden;
+}
+
+.splash-frame {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: min(650px, calc(100dvh - 32px));
+  margin: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b0f14;
 }
 
 .splash-bg {
@@ -364,12 +383,17 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 99990;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0b0f14;
-  overflow: hidden;
+  background-color: #FFFFFF;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  box-sizing: border-box;
   opacity: 1;
   visibility: visible;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s ease;
@@ -381,6 +405,24 @@ body {
   pointer-events: none;
 }
 
+.welcome-frame {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  border-radius: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b0f14;
+}
+
 .welcome-bg {
   position: absolute;
   inset: 0;
@@ -390,6 +432,7 @@ body {
   background-repeat: no-repeat;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .welcome-themed-content {
@@ -399,10 +442,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: clamp(40px, 11vh, 110px);
   width: 100%;
-  max-width: 380px;
-  padding: 0 20px;
+  padding: clamp(20px, 4.5vh, 44px) 20px 24px;
+  box-sizing: border-box;
 }
 
 .welcome-themed-form {
@@ -626,9 +668,12 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 99985;
   display: none;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   background-color: #0b0f14;
 }
 
@@ -4331,19 +4376,59 @@ body.photo-mode .weather-badge {
   }
 
   /* Welcome Screen Login / Register in Short Landscape */
+  .splash-frame,
+  .welcome-frame {
+    max-width: 360px;
+    max-height: calc(100dvh - 16px);
+    border-radius: 18px;
+  }
+
   .welcome-themed-content {
-    max-height: 94vh;
-    overflow-y: auto;
-    padding: 12px;
+    margin: auto;
+    padding: 6px 14px 10px;
+    max-width: 340px;
+    width: 100%;
   }
 
   .auth-title {
-    font-size: 1.35rem;
-    margin-bottom: 2px;
+    font-size: 1.15rem !important;
+    margin-bottom: 2px !important;
+    -webkit-text-stroke: 1.6px #5A3A22 !important;
   }
 
-  .auth-form {
-    gap: 6px;
+  .welcome-themed-form {
+    gap: 5px !important;
+  }
+
+  .input-glass-container {
+    padding: 5px 12px !important;
+    gap: 8px !important;
+  }
+
+  .input-glass-container input {
+    font-size: 0.88rem !important;
+    padding: 2px 0 !important;
+  }
+
+  .input-icon {
+    font-size: 1rem !important;
+  }
+
+  .btn-themed-start {
+    padding: 7px 14px !important;
+    font-size: 0.88rem !important;
+  }
+
+  .welcome-themed-content .auth-switch,
+  .auth-switch {
+    margin-top: 2px !important;
+    padding: 3px 12px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .welcome-themed-content .auth-link,
+  .auth-link {
+    font-size: 0.78rem !important;
   }
 
   /* Modals in landscape: never clip off bottom */
@@ -4354,6 +4439,74 @@ body.photo-mode .weather-badge {
   .webprofile-dialog,
   .death-dialog {
     max-height: 92vh;
+    max-height: 92dvh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ========================================
+   SHORT VIEWPORT OPTIMIZATIONS (Height <= 520px)
+   Applied even if inside iframe / embed where orientation isn't detected as landscape
+   ======================================== */
+@media (max-height: 520px) {
+  .splash-screen,
+  .welcome-screen-themed {
+    padding: 8px;
+  }
+
+  .splash-frame,
+  .welcome-frame {
+    max-width: 360px;
+    max-height: calc(100dvh - 16px);
+    border-radius: 18px;
+  }
+
+  .welcome-themed-content {
+    margin: auto;
+    padding: 6px 14px 10px;
+    max-width: 340px;
+    width: 100%;
+  }
+
+  .auth-title {
+    font-size: 1.15rem !important;
+    margin-bottom: 2px !important;
+    -webkit-text-stroke: 1.6px #5A3A22 !important;
+  }
+
+  .welcome-themed-form {
+    gap: 5px !important;
+  }
+
+  .input-glass-container {
+    padding: 5px 12px !important;
+    gap: 8px !important;
+  }
+
+  .input-glass-container input {
+    font-size: 0.88rem !important;
+    padding: 2px 0 !important;
+  }
+
+  .input-icon {
+    font-size: 1rem !important;
+  }
+
+  .btn-themed-start {
+    padding: 7px 14px !important;
+    font-size: 0.88rem !important;
+  }
+
+  .welcome-themed-content .auth-switch,
+  .auth-switch {
+    margin-top: 2px !important;
+    padding: 3px 12px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .welcome-themed-content .auth-link,
+  .auth-link {
+    font-size: 0.78rem !important;
   }
 }

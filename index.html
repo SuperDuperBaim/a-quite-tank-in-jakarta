@@ -9,19 +9,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2.8">
+    <link rel="stylesheet" href="style.css?v=3.0">
     <!-- Firebase SDK (ES Modules) -->
     <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js?v=2.8"></script>
+    <script type="module" src="script.js?v=3.0"></script>
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
     <section id="splash-screen" class="splash-screen" aria-hidden="false">
-        <div class="splash-bg"></div>
-        <div class="splash-content">
-            <button type="button" id="splash-play-btn" class="btn-splash-play btn-text-play" aria-label="Start Game" data-i18n-aria-label="splash_play_aria">
-                <span class="btn-play-text" data-i18n="btn_start">Start</span>
-            </button>
+        <div class="splash-frame">
+            <div class="splash-bg"></div>
+            <div class="splash-content">
+                <button type="button" id="splash-play-btn" class="btn-splash-play btn-text-play" aria-label="Start Game" data-i18n-aria-label="splash_play_aria">
+                    <span class="btn-play-text" data-i18n="btn_start">Start</span>
+                </button>
+            </div>
         </div>
     </section>
 
@@ -34,50 +36,52 @@
 
     <!-- Welcome Screen (Firebase Auth: Login/Register) -->
     <section id="welcome-screen" class="welcome-screen-themed" aria-hidden="true">
-        <div class="welcome-bg"></div>
-        <div class="welcome-themed-content">
-            <div id="auth-form-container">
-                <!-- Login Form -->
-                <form id="login-form" class="welcome-themed-form auth-form" aria-hidden="false">
-                    <h2 class="auth-title" data-i18n="auth_login_title">Welcome Back</h2>
-                    <div class="input-glass-container">
-                        <span class="input-icon">🐟</span>
-                        <input type="text" id="login-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
-                    </div>
-                    <div class="input-glass-container">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="login-password" name="password" placeholder="Password" data-i18n-placeholder="auth_password_ph" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" id="login-btn" class="btn-themed-start">
-                        <span data-i18n="auth_login_btn">Login</span>
-                        <span class="btn-arrow">➔</span>
-                    </button>
-                    <p class="auth-switch"><span data-i18n="auth_no_account">Don't have an account?</span> <button type="button" id="switch-to-register" class="auth-link" data-i18n="link_register">Sign up</button></p>
-                    <div id="login-error" class="auth-error" hidden></div>
-                </form>
+        <div class="welcome-frame">
+            <div class="welcome-bg"></div>
+            <div class="welcome-themed-content">
+                <div id="auth-form-container">
+                    <!-- Login Form -->
+                    <form id="login-form" class="welcome-themed-form auth-form" aria-hidden="false">
+                        <h2 class="auth-title" data-i18n="auth_login_title">Welcome Back</h2>
+                        <div class="input-glass-container">
+                            <span class="input-icon">🐟</span>
+                            <input type="text" id="login-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
+                        </div>
+                        <div class="input-glass-container">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="login-password" name="password" placeholder="Password" data-i18n-placeholder="auth_password_ph" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" id="login-btn" class="btn-themed-start">
+                            <span data-i18n="auth_login_btn">Login</span>
+                            <span class="btn-arrow">➔</span>
+                        </button>
+                        <p class="auth-switch"><span data-i18n="auth_no_account">Don't have an account?</span> <button type="button" id="switch-to-register" class="auth-link" data-i18n="link_register">Sign up</button></p>
+                        <div id="login-error" class="auth-error" hidden></div>
+                    </form>
 
-                <!-- Register Form -->
-                <form id="register-form" class="welcome-themed-form auth-form" aria-hidden="true">
-                    <h2 class="auth-title" data-i18n="auth_register_title">Create Account</h2>
-                    <div class="input-glass-container">
-                        <span class="input-icon">🐟</span>
-                        <input type="text" id="register-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
-                    </div>
-                    <div class="input-glass-container">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="register-password" name="password" placeholder="Password (min 6 chars)" data-i18n-placeholder="auth_password_min_ph" minlength="6" autocomplete="new-password" required>
-                    </div>
-                    <div class="input-glass-container">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="register-confirm" name="confirm" placeholder="Confirm Password" data-i18n-placeholder="auth_confirm_ph" autocomplete="new-password" required>
-                    </div>
-                    <button type="submit" id="register-btn" class="btn-themed-start">
-                        <span data-i18n="auth_register_btn">Register & Gacha</span>
-                        <span class="btn-arrow">➔</span>
-                    </button>
-                    <p class="auth-switch"><span data-i18n="auth_have_account">Already have an account?</span> <button type="button" id="switch-to-login" class="auth-link" data-i18n="link_login">Login</button></p>
-                    <div id="register-error" class="auth-error" hidden></div>
-                </form>
+                    <!-- Register Form -->
+                    <form id="register-form" class="welcome-themed-form auth-form" aria-hidden="true">
+                        <h2 class="auth-title" data-i18n="auth_register_title">Create Account</h2>
+                        <div class="input-glass-container">
+                            <span class="input-icon">🐟</span>
+                            <input type="text" id="register-username" name="username" placeholder="Username" data-i18n-placeholder="auth_username_ph" maxlength="20" autocomplete="username" required>
+                        </div>
+                        <div class="input-glass-container">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="register-password" name="password" placeholder="Password (min 6 chars)" data-i18n-placeholder="auth_password_min_ph" minlength="6" autocomplete="new-password" required>
+                        </div>
+                        <div class="input-glass-container">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="register-confirm" name="confirm" placeholder="Confirm Password" data-i18n-placeholder="auth_confirm_ph" autocomplete="new-password" required>
+                        </div>
+                        <button type="submit" id="register-btn" class="btn-themed-start">
+                            <span data-i18n="auth_register_btn">Register & Gacha</span>
+                            <span class="btn-arrow">➔</span>
+                        </button>
+                        <p class="auth-switch"><span data-i18n="auth_have_account">Already have an account?</span> <button type="button" id="switch-to-login" class="auth-link" data-i18n="link_login">Login</button></p>
+                        <div id="register-error" class="auth-error" hidden></div>
+                    </form>
+                </div>
             </div>
         </div>
     </section>
