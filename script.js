@@ -917,8 +917,8 @@ import {
         const idleWave = Math.sin(now * s.wobbleSpeed + s.wobblePhase) * s.wobbleAmp;
         s.pitch *= 0.93; // perlahan kembali datar saat santai
         s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${(s.y + idleWave).toFixed(1)}px)`;
-        const flip = s.dir === -1 ? 'scaleX(-1) ' : '';
-        const rot = s.dir === -1 ? -s.pitch : s.pitch;
+        const flip = s.dir === 1 ? 'scaleX(-1) ' : '';
+        const rot = -s.pitch;
         s.img.style.transform = `${flip}rotate(${rot.toFixed(1)}deg)`;
         return;
       }
@@ -957,8 +957,8 @@ import {
       const curY = s.y + wave;
 
       s.el.style.transform = `translate(${s.x.toFixed(1)}px, ${curY.toFixed(1)}px)`;
-      const flip = s.dir === -1 ? 'scaleX(-1) ' : '';
-      const rot = s.dir === -1 ? -s.pitch : s.pitch;
+      const flip = s.dir === 1 ? 'scaleX(-1) ' : '';
+      const rot = -s.pitch;
       s.img.style.transform = `${flip}rotate(${rot.toFixed(1)}deg)`;
     });
 
@@ -1552,7 +1552,7 @@ import {
         const cy = (r.top + r.height / 2 - aqRect.top) * k;
         ctx.save();
         ctx.translate(cx, cy);
-        if (s.dir === -1) ctx.scale(-1, 1);
+        if (s.dir === 1) ctx.scale(-1, 1);
         ctx.drawImage(im, -fw / 2, -fh / 2, fw, fh);
         ctx.restore();
       } catch {}
@@ -1822,7 +1822,11 @@ import {
   }
   async function fbSignOut() {
     try {
-      const authMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      if (fb?.signOut && fb?.auth) {
+        await fb.signOut(fb.auth);
+        return;
+      }
+      const authMod = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
       if (fb?.auth) await authMod.signOut(fb.auth);
     } catch {}
   }
@@ -2103,12 +2107,15 @@ import {
       const equipped = state.activeTank === tk.id;
       const card = document.createElement('div');
       card.className = 'shop-card' + (equipped ? ' equipped' : '');
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'shop-preview-wrap';
       const img = document.createElement('img');
       img.className = 'shop-preview';
       img.src = tk.preview;
       img.alt = t(tk.nameKey);
       img.loading = 'lazy';
       img.onerror = () => { img.src = 'assets/aquarium/aquarium.png'; };
+      imgWrap.appendChild(img);
       const name = document.createElement('h4');
       name.className = 'shop-card-name';
       name.textContent = t(tk.nameKey);
@@ -2117,9 +2124,6 @@ import {
       desc.textContent = t(tk.descKey);
       const foot = document.createElement('div');
       foot.className = 'shop-card-foot';
-      const price = document.createElement('span');
-      price.className = 'shop-price' + (owned ? ' owned' : '');
-      price.textContent = tk.price === 0 ? t('shop_free') : `🪙 ${tk.price}`;
       const btn = document.createElement('button');
       btn.type = 'button';
       if (equipped) {
@@ -2131,13 +2135,20 @@ import {
         btn.textContent = t('shop_use');
         btn.addEventListener('click', () => equipTank(tk.id));
       } else {
-        btn.className = 'shop-action-btn';
-        btn.textContent = `${t('shop_buy')} • 🪙 ${tk.price}`;
-        if ((state.coins || 0) < tk.price) btn.disabled = true;
+        btn.className = 'shop-action-btn buy';
+        if (tk.price === 0) {
+          btn.textContent = t('shop_free');
+        } else {
+          btn.innerHTML = `<span class="shop-coin-icon">🪙</span> <span>${tk.price}</span>`;
+        }
+        if ((state.coins || 0) < tk.price) {
+          btn.disabled = true;
+          btn.title = t('shop_need_coins');
+        }
         btn.addEventListener('click', () => buyTank(tk.id));
       }
-      foot.append(price, btn);
-      card.append(img, name, desc, foot);
+      foot.appendChild(btn);
+      card.append(imgWrap, name, desc, foot);
       grid.appendChild(card);
     });
   }

@@ -9,10 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=3.1">
-    <!-- Firebase SDK (ES Modules) -->
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js?v=3.1"></script>
+    <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
@@ -551,6 +548,39 @@
             });
         });
     </script>
+
+    <!-- Firebase SDK Initialization (CDN) -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYoe01Bi8HeRfNIl0ta8Q0qIh1UOJ2jak",
+            authDomain: "a-quite-tank-in-jakarta.firebaseapp.com",
+            projectId: "a-quite-tank-in-jakarta",
+            storageBucket: "a-quite-tank-in-jakarta.firebasestorage.app",
+            messagingSenderId: "918508289180",
+            appId: "1:918508289180:web:dee799b5ed459951f78159",
+            measurementId: "G-7CS9JXHWVJ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // Simpan instance ke window agar dapat diakses modul aplikasi
+        window.__firebaseApp = app;
+        window.__firebaseAnalytics = analytics;
+        window.__firebaseConfig = firebaseConfig;
+    </script>
+
+    <!-- Main Game Script (ES Modules) -->
+    <script type="module" src="script.js?v=3.3"></script>
 
 </body>
 </html>

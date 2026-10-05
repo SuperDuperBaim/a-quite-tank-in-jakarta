@@ -19,11 +19,25 @@ let _mods = null;
 
 async function loadModules() {
   if (_mods) return _mods;
-  const appMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-  const authMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-  const fsMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  const app = appMod.initializeApp(firebaseConfig);
+  // Import full CDN URLs (Firebase v12.1.0)
+  const appMod = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js');
+  const authMod = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
+  const fsMod = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js');
+  const analyticsMod = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js').catch(() => null);
+
+  // Pakai instance app yang sudah diinisialisasi oleh script CDN di index.html, atau buat baru jika belum
+  const app = (appMod.getApps && appMod.getApps().length > 0)
+    ? appMod.getApp()
+    : (window.__firebaseApp || appMod.initializeApp(firebaseConfig));
+
+  let analytics = window.__firebaseAnalytics || null;
+  if (!analytics && analyticsMod?.getAnalytics) {
+    try { analytics = analyticsMod.getAnalytics(app); } catch {}
+  }
+
   _mods = {
+    app,
+    analytics,
     auth: authMod.getAuth(app),
     db: fsMod.getFirestore(app),
     createUserWithEmailAndPassword: authMod.createUserWithEmailAndPassword,
