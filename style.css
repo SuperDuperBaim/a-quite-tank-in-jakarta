@@ -1417,19 +1417,26 @@ body {
   100% { transform: translateY(-130px) scale(1.1); opacity: 0; }
 }
 
-/* Murky water overlay — covers the FULL interior glass water area (top rim → sand bed) */
+/* Murky water overlay — accurately fits the interior glass water area (water surface → sand bed) */
 .dirt-overlay {
   position: absolute;
-  left: 15%;
-  top: 25%;
-  width: 70%;
-  height: 46%;
-  background-color: rgba(110, 70, 30, 0.7);
+  left: 18.4%;
+  top: 32.5%;
+  width: 63.2%;
+  height: 32%;
+  background: linear-gradient(
+    180deg,
+    rgba(95, 68, 35, 0.5) 0%,
+    rgba(110, 75, 38, 0.72) 45%,
+    rgba(115, 78, 38, 0.85) 90%,
+    rgba(100, 68, 32, 0.9) 100%
+  );
+  box-shadow: inset 0 0 18px rgba(65, 42, 18, 0.45);
   pointer-events: none;
   z-index: 8;
   opacity: 0;
   transition: opacity 0.8s ease;
-  border-radius: 4px;
+  border-radius: 6px 6px 12px 12px;
 }
 
 /* Game-Over overlay */
