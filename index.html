@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=3.3">
+    <link rel="stylesheet" href="style.css?v=3.6">
 </head>
 <body>
     <!-- Splash Screen (Cover with 1.jpg & Play Button) -->
@@ -394,28 +394,26 @@
             <div class="settings-backdrop" id="webprofile-backdrop"></div>
             <div class="settings-dialog webprofile-dialog" role="dialog" aria-labelledby="webprofile-title">
                 <div class="webprofile-header">
-                    <div class="webprofile-header-badge">🎬</div>
+                    <div class="webprofile-header-badge">🌐</div>
                     <div class="webprofile-header-text">
                         <h3 id="webprofile-title" data-i18n="webprofile_title">Profil Web</h3>
-                        <p class="webprofile-header-subtitle" data-i18n="webprofile_subtitle">Ananda Ibrahim</p>
+                        <a href="https://anandaibrahimhs.web.id" target="_blank" rel="noopener noreferrer" class="webprofile-header-subtitle webprofile-link" title="Buka anandaibrahimhs.web.id">Ananda Ibrahim</a>
                     </div>
+                    <button type="button" id="webprofile-close-btn" class="settings-close" aria-label="Tutup" onclick="document.getElementById('webprofile-modal').setAttribute('aria-hidden','true')">&times;</button>
                 </div>
                 <div class="webprofile-body">
-                    <div class="webprofile-video-container">
+                    <div class="webprofile-video-container" id="webprofile-video-container" title="Klik untuk membuka anandaibrahimhs.web.id">
                         <video id="webprofile-video" class="webprofile-video" playsinline preload="auto">
                             <source src="assets/webprofile.mp4" type="video/mp4">
                             <source src="assets/1002 (2).mp4" type="video/mp4">
                             Browser Anda tidak mendukung pemutar video.
                         </video>
                         <div id="webprofile-fallback" class="webprofile-fallback" hidden>
-                            <span class="webprofile-fallback-icon">🎬</span>
-                            <h4 class="webprofile-fallback-title" data-i18n="webprofile_placeholder_title">Video Profil Belum Ditemukan</h4>
-                            <p class="webprofile-fallback-desc" data-i18n="webprofile_placeholder_desc">
-                                Letakkan file video berformat 16:9 di folder assets/ dengan judul (webprofile.mp4)
+                            <span class="webprofile-fallback-icon">🌐</span>
+                            <h4 class="webprofile-fallback-title">Ananda Ibrahim</h4>
+                            <p class="webprofile-fallback-desc">
+                                Klik untuk membuka portfolio <strong>anandaibrahimhs.web.id</strong>
                             </p>
-                            <button type="button" class="btn btn-webprofile-done" style="margin-top:10px;padding:8px 16px;font-size:0.85rem;" onclick="document.getElementById('webprofile-modal').setAttribute('aria-hidden','true')">
-                                Tutup
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -580,7 +578,7 @@
     </script>
 
     <!-- Main Game Script (ES Modules) -->
-    <script type="module" src="script.js?v=3.4"></script>
+    <script type="module" src="script.js?v=3.7"></script>
 
 </body>
 </html>

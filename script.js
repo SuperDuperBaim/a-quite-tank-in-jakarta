@@ -2346,15 +2346,22 @@ import {
       webVid.addEventListener('loadeddata', hideFallback);
       webVid.addEventListener('canplay', hideFallback);
       webVid.addEventListener('error', checkError);
-      webVid.addEventListener('ended', closeWebprofile);
-      webVid.addEventListener('click', () => {
-        if (webVid.paused) {
-          webVid.play().catch(() => {});
-        } else {
-          webVid.pause();
+      webVid.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open('https://anandaibrahimhs.web.id', '_blank', 'noopener,noreferrer');
+      });
+    }
+    const webContainer = $('webprofile-video-container');
+    if (webContainer) {
+      webContainer.addEventListener('click', (e) => {
+        if (e.target !== webVid) {
+          window.open('https://anandaibrahimhs.web.id', '_blank', 'noopener,noreferrer');
         }
       });
     }
+    $('webprofile-close-btn')?.addEventListener('click', closeWebprofile);
+    $('webprofile-backdrop')?.addEventListener('click', closeWebprofile);
     els.photoBackBtn?.addEventListener('click', closePhotoMode);
     els.photoSaveBtn?.addEventListener('click', savePhoto);
 
