@@ -872,24 +872,39 @@ import {
     const pt = containerPoint(e);
     spawnRipple(e);
     const box = els.fishContainer;
+    if (!box) return;
     const rect = box.getBoundingClientRect();
-    swimmers.forEach(s => {
-      if (s.trait === 'playful') {
-        // mendekati lokasi ketukan
-        pickTarget(s, rect, { x: pt.x, y: pt.y });
-        s.pause = 0;
-      } else if (s.trait === 'skittish') {
-        // terkejut: dash menjauh
+
+    swimmers.forEach((s, idx) => {
+      s.pause = 0; // Bangunkan ikan yang sedang diam/santai
+
+      // Berikan offset posisi per ikan agar berkumpul alami dan tidak bertumpuk di 1 titik
+      const angle = (idx / Math.max(1, swimmers.length)) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+      const spread = 22 + Math.random() * 32;
+      const targetX = pt.x + Math.cos(angle) * spread;
+      const targetY = pt.y + Math.sin(angle) * (spread * 0.55);
+
+      if (s.trait === 'skittish') {
+        // Ikan penakut: jika ketukan sangat dekat (< 95px), kaget dan melesat menjauh
         const dx = s.x - pt.x, dy = s.y - pt.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const fleeDist = 130;
-        pickTarget(s, rect, {
-          x: s.x + (dx / d) * fleeDist,
-          y: s.y + (dy / d) * fleeDist * 0.6,
-        });
-        s.pause = 0;
-        s.dashUntil = performance.now() + 900;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 95) {
+          const fleeDist = 120 + Math.random() * 40;
+          pickTarget(s, rect, {
+            x: s.x + (dx / dist) * fleeDist,
+            y: s.y + (dy / dist) * fleeDist * 0.5,
+          });
+          s.dashUntil = performance.now() + 850;
+          return;
+        }
       }
+
+      // Semua ikan lainnya (playful, glutton, sleepy, dll.) mendekati titik ketukan
+      pickTarget(s, rect, { x: targetX, y: targetY });
+
+      // Dorongan renang responsif singkat agar ikan langsung bergerak aktif menyambut ketukan
+      const boostDur = s.trait === 'sleepy' ? 700 : (s.trait === 'playful' ? 2000 : 1400);
+      s.boostUntil = performance.now() + boostDur;
     });
   }
   function spawnRipple(e) {
